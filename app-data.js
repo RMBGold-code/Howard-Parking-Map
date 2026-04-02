@@ -1,0 +1,644 @@
+const buildings = [
+  {
+    name: "Howard University College of Pharmacy",
+    shortLabel: "Pharmacy",
+    aliases: ["college of pharmacy", "pharmacy", "cop"],
+    category: "health-sciences",
+    typeLabel: "Health sciences",
+    address: "2300 4th St. NW, Washington, DC 20059",
+    note: "Used here as the campus anchor point.",
+    lat: 38.91858,
+    lng: -77.01494
+  },
+  {
+    name: "College of Dentistry",
+    shortLabel: "Dentistry",
+    aliases: ["college of dentistry", "dentistry", "dental school"],
+    category: "health-sciences",
+    typeLabel: "Health sciences",
+    address: "600 W St. NW, Washington, DC 20059",
+    note: "Health sciences building near the College of Pharmacy.",
+    lat: 38.91896,
+    lng: -77.01522
+  },
+  {
+    name: "College of Medicine",
+    shortLabel: "Medicine",
+    aliases: ["college of medicine", "medicine", "medical school"],
+    category: "health-sciences",
+    typeLabel: "Health sciences",
+    address: "520 W St. NW, Washington, DC 20059",
+    note: "Howard medical school building in the health sciences cluster.",
+    lat: 38.9191,
+    lng: -77.01618
+  },
+  {
+    name: "Louis Stokes Health Sciences Library",
+    shortLabel: "Stokes Lib",
+    aliases: ["stokes library", "health sciences library", "louis stokes"],
+    category: "library-admin",
+    typeLabel: "Library / admin",
+    address: "501 W St. NW, Washington, DC 20059",
+    note: "Major library serving the health sciences campus.",
+    lat: 38.91788,
+    lng: -77.01466
+  },
+  {
+    name: "Howard University Hospital",
+    shortLabel: "Hospital",
+    aliases: ["hospital", "howard hospital", "huh"],
+    category: "health-sciences",
+    typeLabel: "Health sciences",
+    address: "2041 Georgia Ave. NW, Washington, DC 20060",
+    note: "Howard's hospital campus on the west side of the medical area.",
+    lat: 38.91906,
+    lng: -77.0191
+  },
+  {
+    name: "Mordecai Wyatt Johnson Administration Building",
+    shortLabel: "Admin",
+    aliases: ["administration building", "mordecai johnson", "mwj"],
+    category: "library-admin",
+    typeLabel: "Library / admin",
+    address: "2400 6th St. NW, Washington, DC 20059",
+    note: "Starting point of Howard's official self-guided tour booklet.",
+    lat: 38.91992,
+    lng: -77.01856
+  },
+  {
+    name: "School of Business",
+    shortLabel: "Business",
+    aliases: ["business school", "school of business"],
+    category: "academic",
+    typeLabel: "Academic",
+    address: "2600 6th St. NW, Washington, DC 20059",
+    note: "Highlighted on Howard's self-guided tour as a major academic stop.",
+    lat: 38.92113,
+    lng: -77.01844
+  },
+  {
+    name: "Founders Library",
+    shortLabel: "Founders",
+    aliases: ["founders", "founders library"],
+    category: "library-admin",
+    typeLabel: "Library / admin",
+    address: "500 Howard Pl. NW, Washington, DC 20059",
+    note: "The central library in Howard's multi-library system.",
+    lat: 38.91934,
+    lng: -77.01662
+  },
+  {
+    name: "Blackburn University Center",
+    shortLabel: "Blackburn",
+    aliases: ["blackburn", "student center", "blackburn center"],
+    category: "student-life",
+    typeLabel: "Student life",
+    address: "2397 6th St. NW, Washington, DC 20059",
+    note: "Student center with dining, events, and campus gathering spaces.",
+    lat: 38.92022,
+    lng: -77.01806
+  },
+  {
+    name: "Alain Locke Hall",
+    shortLabel: "Locke",
+    aliases: ["locke hall", "alain locke", "locke"],
+    category: "academic",
+    typeLabel: "Academic",
+    address: "2453 6th St. NW, Washington, DC 20059",
+    note: "Home to parts of the College of Arts and Sciences.",
+    lat: 38.92056,
+    lng: -77.01752
+  },
+  {
+    name: "School of Education",
+    shortLabel: "Education",
+    aliases: ["school of education", "education"],
+    category: "academic",
+    typeLabel: "Academic",
+    address: "2441 4th St. NW, Washington, DC 20059",
+    note: "Academic stop identified in Howard's self-guided tour booklet.",
+    lat: 38.91988,
+    lng: -77.01692
+  },
+  {
+    name: "Frederick Douglass Memorial Hall",
+    shortLabel: "Douglass",
+    aliases: ["douglass hall", "frederick douglass memorial hall", "douglass"],
+    category: "academic",
+    typeLabel: "Academic",
+    address: "2441 6th St. NW, Washington, DC 20059",
+    note: "Classroom building for departments in Arts and Sciences.",
+    lat: 38.9203,
+    lng: -77.01678
+  },
+  {
+    name: "Lulu Vere Childers Hall",
+    shortLabel: "Childers",
+    aliases: ["childers hall", "childers", "lulu childers"],
+    category: "arts",
+    typeLabel: "Arts",
+    address: "2455 6th St. NW, Washington, DC 20059",
+    note: "Home of Howard's fine arts division.",
+    lat: 38.92162,
+    lng: -77.01712
+  },
+  {
+    name: "Ira Aldridge Theater",
+    shortLabel: "Aldridge",
+    aliases: ["ira aldridge", "aldridge theater", "theater"],
+    category: "arts",
+    typeLabel: "Arts",
+    address: "2455 6th St. NW, Washington, DC 20059",
+    note: "Student performance venue named in the self-guided tour.",
+    lat: 38.92108,
+    lng: -77.01694
+  },
+  {
+    name: "Cramton Auditorium",
+    shortLabel: "Cramton",
+    aliases: ["cramton", "cramton auditorium"],
+    category: "arts",
+    typeLabel: "Arts",
+    address: "2455 6th St. NW, Washington, DC 20059",
+    note: "Large-event venue used for convocations, concerts, and pageants.",
+    lat: 38.92184,
+    lng: -77.01684
+  },
+  {
+    name: "Greene Stadium",
+    shortLabel: "Greene",
+    aliases: ["greene stadium", "stadium"],
+    category: "athletics",
+    typeLabel: "Athletics",
+    address: "2400 6th St. NW, Washington, DC 20059",
+    note: "Howard Athletics lists Greene Stadium at 2400 6th Street NW, just west of the McMillan Reservoir edge.",
+    lat: 38.92559,
+    lng: -77.02079
+  },
+  {
+    name: "Burr Gymnasium",
+    shortLabel: "Burr",
+    aliases: ["burr gym", "burr gymnasium", "the burr"],
+    category: "athletics",
+    typeLabel: "Athletics",
+    address: "2801 Georgia Ave. NW, Washington, DC 20001",
+    note: "Basketball, volleyball, and swimming venue on the north side of campus.",
+    lat: 38.92361,
+    lng: -77.01817
+  },
+  {
+    name: "Cook Hall",
+    shortLabel: "Cook",
+    aliases: ["cook hall", "cook"],
+    category: "student-life",
+    typeLabel: "Student life",
+    address: "2601 6th St. NW, Washington, DC 20059",
+    note: "Residence hall called out on Howard's self-guided tour route.",
+    lat: 38.92328,
+    lng: -77.0189
+  },
+  {
+    name: "Drew Hall",
+    shortLabel: "Drew",
+    aliases: ["drew hall", "drew"],
+    category: "student-life",
+    typeLabel: "Student life",
+    address: "511 Gresham Pl. NW, Washington, DC 20059",
+    note: "Howard housing places Drew Hall on Gresham Place, north of Greene Stadium and west of the reservoir.",
+    lat: 38.92648,
+    lng: -77.01946
+  },
+  {
+    name: "Just Hall",
+    shortLabel: "Just",
+    aliases: ["just hall", "ernest just", "science"],
+    category: "academic",
+    typeLabel: "Academic",
+    address: "500 College St. NW, Washington, DC 20059",
+    note: "Science building on the east side of main campus.",
+    lat: 38.91838,
+    lng: -77.01648
+  },
+  {
+    name: "Mackey Building",
+    shortLabel: "Mackey",
+    aliases: ["mackey", "mackey building", "architecture"],
+    category: "academic",
+    typeLabel: "Academic",
+    address: "2366 6th St. NW, Washington, DC 20059",
+    note: "Architecture-related academic building near the south side of main campus.",
+    lat: 38.91862,
+    lng: -77.0186
+  },
+  {
+    name: "Howard Center",
+    shortLabel: "Howard Ctr",
+    aliases: ["howard center", "bookstore", "barnes and noble"],
+    category: "student-life",
+    typeLabel: "Student life",
+    address: "2225 Georgia Ave. NW, Washington, DC 20059",
+    note: "Retail and student-facing campus edge building.",
+    lat: 38.91843,
+    lng: -77.02124
+  },
+  {
+    name: "Ben's Chili Bowl",
+    shortLabel: "Ben's",
+    aliases: ["bens chili bowl", "ben's chili bowl", "chili bowl"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "1213 U St. NW, Washington, DC 20009",
+    note: "Historic D.C. restaurant on U Street, within about 2 miles of Howard.",
+    lat: 38.91702,
+    lng: -77.02818
+  },
+  {
+    name: "Busboys and Poets 14th & V",
+    shortLabel: "Busboys",
+    aliases: ["busboys and poets", "14th and v", "busboys"],
+    category: "brunch",
+    typeLabel: "Brunch",
+    address: "2021 14th St. NW, Washington, DC 20009",
+    note: "Cafe-bookstore and events venue with all-day brunch-friendly service south of Howard.",
+    lat: 38.91752,
+    lng: -77.03174
+  },
+  {
+    name: "Le Diplomate",
+    shortLabel: "Diplomate",
+    aliases: ["le diplomate", "diplomate"],
+    category: "brunch",
+    typeLabel: "Brunch",
+    address: "1601 14th St. NW, Washington, DC 20009",
+    note: "Popular French brasserie on 14th Street with a well-known weekend brunch.",
+    lat: 38.91139,
+    lng: -77.03166
+  },
+  {
+    name: "Florida Avenue Grill",
+    shortLabel: "Fla Grill",
+    aliases: ["florida avenue grill", "florida grill", "the grill"],
+    category: "brunch",
+    typeLabel: "Brunch",
+    address: "1100 Florida Ave. NW, Washington, DC 20009",
+    note: "Historic D.C. brunch and breakfast stop with all-day breakfast.",
+    lat: 38.92086,
+    lng: -77.02792
+  },
+  {
+    name: "Ted's Bulletin 14th Street",
+    shortLabel: "Ted's",
+    aliases: ["teds bulletin", "ted's bulletin", "teds 14th", "ted's 14th"],
+    category: "brunch",
+    typeLabel: "Brunch",
+    address: "1818 14th St. NW, Washington, DC 20009",
+    note: "All-day breakfast and weekend brunch spot on 14th Street.",
+    lat: 38.91429,
+    lng: -77.03167
+  },
+  {
+    name: "The Red Hen",
+    shortLabel: "Red Hen",
+    aliases: ["the red hen", "red hen"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "1822 1st St. NW, Washington, DC 20001",
+    note: "Italian-influenced neighborhood restaurant east of Howard.",
+    lat: 38.91405,
+    lng: -77.00895
+  },
+  {
+    name: "Rooster & Owl",
+    shortLabel: "R&O",
+    aliases: ["rooster and owl", "rooster & owl", "rooster owl"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "2436 14th St. NW, Washington, DC 20009",
+    note: "Contemporary restaurant north of U Street.",
+    lat: 38.92259,
+    lng: -77.0318
+  },
+  {
+    name: "Maydan",
+    shortLabel: "Maydan",
+    aliases: ["maydan"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "1346 Florida Ave. NW, Washington, DC 20009",
+    note: "Middle Eastern restaurant southwest of Howard.",
+    lat: 38.91933,
+    lng: -77.03146
+  },
+  {
+    name: "Thip Khao",
+    shortLabel: "Thip Khao",
+    aliases: ["thip khao"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "3462 14th St. NW, Washington, DC 20010",
+    note: "Lao restaurant north of Howard that still sits comfortably inside the 20-mile map radius.",
+    lat: 38.93422,
+    lng: -77.03214
+  },
+  {
+    name: "Founding Farmers DC",
+    shortLabel: "Farmers",
+    aliases: ["founding farmers", "founding farmers dc"],
+    category: "brunch",
+    typeLabel: "Brunch",
+    address: "1924 Pennsylvania Ave. NW, Washington, DC 20006",
+    note: "Foggy Bottom favorite that serves breakfast and weekend brunch.",
+    lat: 38.90052,
+    lng: -77.04438
+  },
+  {
+    name: "Rasika Penn Quarter",
+    shortLabel: "Rasika",
+    aliases: ["rasika", "rasika penn quarter"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "633 D St. NW, Washington, DC 20004",
+    note: "Modern Indian restaurant in Penn Quarter with both lunch and dinner service.",
+    lat: 38.89477,
+    lng: -77.02167
+  },
+  {
+    name: "Zaytinya",
+    shortLabel: "Zaytinya",
+    aliases: ["zaytinya"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "701 9th St. NW, Washington, DC 20001",
+    note: "Jose Andres mezze restaurant downtown with a popular weekend brunch program.",
+    lat: 38.89976,
+    lng: -77.02473
+  },
+  {
+    name: "Jaleo DC",
+    shortLabel: "Jaleo",
+    aliases: ["jaleo", "jaleo dc"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "480 7th St. NW, Washington, DC 20004",
+    note: "Flagship Spanish tapas restaurant in Penn Quarter.",
+    lat: 38.89572,
+    lng: -77.02189
+  },
+  {
+    name: "Unconventional Diner",
+    shortLabel: "Unconv Dnr",
+    aliases: ["unconventional diner", "diner"],
+    category: "brunch",
+    typeLabel: "Brunch",
+    address: "1207 9th St. NW, Washington, DC 20001",
+    note: "Modern comfort-food spot with all-day brunch service near Mount Vernon Square.",
+    lat: 38.90536,
+    lng: -77.0252
+  },
+  {
+    name: "St. Anselm DC",
+    shortLabel: "St. Anselm",
+    aliases: ["st anselm", "st. anselm", "st anselm dc"],
+    category: "brunch",
+    typeLabel: "Brunch",
+    address: "1250 5th St. NE, Washington, DC 20002",
+    note: "Union Market steakhouse and tavern with weekend brunch.",
+    lat: 38.90767,
+    lng: -77.01863
+  },
+  {
+    name: "Albi",
+    shortLabel: "Albi",
+    aliases: ["albi"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "1346 4th St. SE, Washington, DC 20003",
+    note: "Navy Yard destination for Palestinian-inspired dining.",
+    lat: 38.87661,
+    lng: -77.0009
+  },
+  {
+    name: "Clyde's of Georgetown",
+    shortLabel: "Clyde's",
+    aliases: ["clydes georgetown", "clyde's georgetown", "clydes"],
+    category: "brunch",
+    typeLabel: "Brunch",
+    address: "3236 M St. NW, Washington, DC 20007",
+    note: "Long-running Georgetown staple serving lunch, dinner, and brunch.",
+    lat: 38.90565,
+    lng: -77.06363
+  },
+  {
+    name: "bartaco The Wharf",
+    shortLabel: "bartaco",
+    aliases: ["bartaco", "bartaco wharf", "the wharf bartaco"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "645 Wharf St. SW, Washington, DC 20024",
+    note: "Wharf waterfront taco spot with late-night service.",
+    lat: 38.87897,
+    lng: -77.02486
+  },
+  {
+    name: "Silver Diner Navy Yard",
+    shortLabel: "Silver",
+    aliases: ["silver diner", "silver diner navy yard", "navy yard diner"],
+    category: "brunch",
+    typeLabel: "Brunch",
+    address: "1250 Half St. SE, Washington, DC 20003",
+    note: "All-day breakfast and diner menu across from Nationals Park.",
+    lat: 38.87362,
+    lng: -77.00769
+  },
+  {
+    name: "Ada's on the River",
+    shortLabel: "Ada's",
+    aliases: ["adas on the river", "ada's on the river", "adas"],
+    category: "brunch",
+    typeLabel: "Brunch",
+    address: "3 Pioneer Mill Way, Alexandria, VA 22314",
+    note: "Old Town Alexandria waterfront restaurant known for its brunch and river views.",
+    lat: 38.80153,
+    lng: -77.04099
+  },
+  {
+    name: "Ambar Clarendon",
+    shortLabel: "Ambar",
+    aliases: ["ambar clarendon", "ambar arlington", "ambar"],
+    category: "brunch",
+    typeLabel: "Brunch",
+    address: "2901 Wilson Blvd., Arlington, VA 22201",
+    note: "Clarendon Balkan restaurant known for its brunch and unlimited tasting format.",
+    lat: 38.88666,
+    lng: -77.09334
+  },
+  {
+    name: "miXt Food Hall",
+    shortLabel: "miXt",
+    aliases: ["mixt food hall", "mixt", "food hall"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "3809 Rhode Island Ave., Brentwood, MD 20722",
+    note: "Brentwood food hall and casual eatery hub in Prince George's County.",
+    lat: 38.9384,
+    lng: -76.95262
+  },
+  {
+    name: "District Winery",
+    shortLabel: "Winery",
+    aliases: ["district winery", "winery"],
+    category: "winery",
+    typeLabel: "Winery",
+    address: "385 Water St. SE, Washington, DC 20003",
+    note: "Waterfront winery, tasting room, and private-event venue in Navy Yard.",
+    lat: 38.87686,
+    lng: -76.96713
+  },
+  {
+    name: "Howard Theatre",
+    shortLabel: "Howard Thtr",
+    aliases: ["howard theatre", "howard theater"],
+    category: "event-venue",
+    typeLabel: "Event venue",
+    address: "620 T St. NW, Washington, DC 20001",
+    note: "Historic Shaw performance venue a short trip south of Howard's campus.",
+    lat: 38.91589,
+    lng: -77.02155
+  },
+  {
+    name: "9:30 Club",
+    shortLabel: "9:30 Club",
+    aliases: ["930 club", "9:30", "9:30 club"],
+    category: "event-venue",
+    typeLabel: "Event venue",
+    address: "815 V St. NW, Washington, DC 20001",
+    note: "Major concert venue on the U Street corridor.",
+    lat: 38.91854,
+    lng: -77.02439
+  },
+  {
+    name: "Lincoln Theatre",
+    shortLabel: "Lincoln",
+    aliases: ["lincoln theatre", "lincoln theater"],
+    category: "event-venue",
+    typeLabel: "Event venue",
+    address: "1215 U St. NW, Washington, DC 20009",
+    note: "Historic U Street theater for comedy, music, and touring events.",
+    lat: 38.91686,
+    lng: -77.02838
+  },
+  {
+    name: "Walter E. Washington Convention Center",
+    shortLabel: "Conv Ctr",
+    aliases: ["convention center", "walter e washington convention center", "walter washington"],
+    category: "event-venue",
+    typeLabel: "Event venue",
+    address: "801 Allen Y. Lew Pl. NW, Washington, DC 20001",
+    note: "Large downtown convention and expo venue.",
+    lat: 38.90484,
+    lng: -77.02268
+  },
+  {
+    name: "Capital One Arena",
+    shortLabel: "Capital One",
+    aliases: ["capital one arena", "arena", "gallery place arena"],
+    category: "event-venue",
+    typeLabel: "Event venue",
+    address: "601 F St. NW, Washington, DC 20004",
+    note: "Major arena for concerts, basketball, hockey, and special events.",
+    lat: 38.89812,
+    lng: -77.02091
+  },
+  {
+    name: "The Anthem",
+    shortLabel: "Anthem",
+    aliases: ["the anthem", "anthem dc"],
+    category: "event-venue",
+    typeLabel: "Event venue",
+    address: "901 Wharf St. SW, Washington, DC 20024",
+    note: "Large waterfront music venue at The Wharf.",
+    lat: 38.88042,
+    lng: -77.02575
+  },
+  {
+    name: "Nationals Park",
+    shortLabel: "Nats Park",
+    aliases: ["nationals park", "nats park"],
+    category: "event-venue",
+    typeLabel: "Event venue",
+    address: "1500 South Capitol St. SE, Washington, DC 20003",
+    note: "Baseball park that also hosts large concerts and special events.",
+    lat: 38.87301,
+    lng: -77.00743
+  },
+  {
+    name: "MGM National Harbor",
+    shortLabel: "MGM",
+    aliases: ["mgm national harbor", "national harbor mgm", "mgm"],
+    category: "event-venue",
+    typeLabel: "Event venue",
+    address: "101 MGM National Ave., Oxon Hill, MD 20745",
+    note: "Regional entertainment destination with theater, dining, and nightlife.",
+    lat: 38.7931,
+    lng: -77.01809
+  },
+  {
+    name: "The Fillmore Silver Spring",
+    shortLabel: "Fillmore",
+    aliases: ["fillmore silver spring", "the fillmore", "fillmore"],
+    category: "event-venue",
+    typeLabel: "Event venue",
+    address: "8656 Colesville Rd., Silver Spring, MD 20910",
+    note: "Popular regional concert venue north of D.C. within the 20-mile map radius.",
+    lat: 38.99655,
+    lng: -77.02714
+  }
+];
+
+const categoryStyles = {
+  academic: { label: "Academic", color: "#1565c0" },
+  "student-life": { label: "Student life", color: "#d84727" },
+  arts: { label: "Arts", color: "#f18f01" },
+  athletics: { label: "Athletics", color: "#7b4ab8" },
+  "health-sciences": { label: "Health sciences", color: "#00897b" },
+  "library-admin": { label: "Library / admin", color: "#4f5d75" },
+  restaurant: { label: "Restaurant", color: "#b21f2d" },
+  brunch: { label: "Brunch", color: "#d96f2b" },
+  winery: { label: "Winery", color: "#7a274f" },
+  "event-venue": { label: "Event venue", color: "#8a2d8f" }
+};
+
+const foodVenueCategories = new Set(["restaurant", "brunch", "winery"]);
+const geocodeCacheKey = "howard-landmark-geocodes-v2";
+const correctionFlagsKey = "howard-landmark-corrections-v1";
+const foodPriceRanges = {
+  "Ben's Chili Bowl": "$10-$18",
+  "Busboys and Poets 14th & V": "$15-$26",
+  "Le Diplomate": "$19-$45",
+  "Florida Avenue Grill": "$10-$16",
+  "Ted's Bulletin 14th Street": "$15-$22",
+  "The Red Hen": "$22-$38",
+  "Rooster & Owl": "$125+ prix fixe",
+  "Maydan": "$45-$70 per person",
+  "Thip Khao": "$15-$30",
+  "Founding Farmers DC": "$15-$28",
+  "Rasika Penn Quarter": "$22-$38",
+  "Zaytinya": "$14-$32",
+  "Jaleo DC": "$12-$30",
+  "Unconventional Diner": "$16-$28",
+  "St. Anselm DC": "$16-$26",
+  "Albi": "$18-$40 a la carte",
+  "Clyde's of Georgetown": "$17-$33",
+  "bartaco The Wharf": "$15-$28",
+  "Silver Diner Navy Yard": "$14-$26",
+  "Ada's on the River": "$18-$42",
+  "Ambar Clarendon": "$15-$22",
+  "miXt Food Hall": "$10-$25",
+  "District Winery": "$12-$20 plates, $20 tastings"
+};
+
+buildings.forEach((building) => {
+  building.baseLat = building.lat;
+  building.baseLng = building.lng;
+});
+

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Howard University Regional Landmark Map</title>
+  <meta name="description" content="Interactive Howard University map with landmarks, nearby dining, event venues, parking search, and navigation.">
+  <meta name="theme-color" content="#b21f2d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Howard Map">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <h1 class="hero-title">Welcome to Howard University</h1>
+        <div class="hero-brand-row">
+          <div class="hero-logo-shell">
+            <img
+              class="hero-logo"
+              src="https://ouc.howard.edu/sites/ouc.howard.edu/files/styles/large/public/2024-06/HOWARD_CLOCKTOWER_LOGO_HORIZONTAL.png?itok=Tz1zZdh4"
+              alt="Howard University logo"
+            >
+          </div>
+        </div>
+        <div class="hero-content-grid">
+          <div class="hero-text">
+            <p class="eyebrow">Howard + D.C. Landmarks</p>
+            <p class="lede">
+              This map highlights Howard's main campus along with selected restaurants, brunch spots, wineries, and
+              event venues within roughly 20 miles of campus.
+            </p>
+            <div class="app-actions">
+              <button id="installAppButton" class="map-jump app-action" type="button" hidden>Install app</button>
+              <button id="shareAppButton" class="map-jump app-action" type="button">Share app</button>
+            </div>
+            <p id="appActionStatus" class="app-action-status" aria-live="polite">
+              Host this page online to share it and let others install it like an app.
+            </p>
+          </div>
+          <figure class="hero-photo-card">
+            <img
+              class="hero-photo"
+              src="https://admission.howard.edu/sites/admission.howard.edu/files/styles/large/public/2020-09/Clocktower-2.png?itok=jhEEukB8"
+              alt="Howard University clock tower"
+            >
+          </figure>
+        </div>
+      </div>
+
+      <aside class="legend-card">
+        <h2>Legend</h2>
+        <div class="legend-list">
+          <button class="legend-chip is-active" data-filter="all">
+            <span class="swatch swatch-all"></span>
+            Show all
+          </button>
+          <button class="legend-chip is-active" data-filter="academic">
+            <span class="swatch swatch-non-reserved"></span>
+            Academic
+          </button>
+          <button class="legend-chip is-active" data-filter="student-life">
+            <span class="swatch swatch-reserved"></span>
+            Student life
+          </button>
+          <button class="legend-chip is-active" data-filter="arts">
+            <span class="swatch swatch-visitor"></span>
+            Arts
+          </button>
+          <button class="legend-chip is-active" data-filter="athletics">
+            <span class="swatch swatch-student"></span>
+            Athletics
+          </button>
+          <button class="legend-chip is-active" data-filter="health-sciences">
+            <span class="swatch swatch-hospital"></span>
+            Health sciences
+          </button>
+          <button class="legend-chip is-active" data-filter="library-admin">
+            <span class="swatch swatch-library-admin"></span>
+            Library / admin
+          </button>
+          <button class="legend-chip is-active" data-filter="restaurant">
+            <span class="swatch swatch-restaurant"></span>
+            Restaurants
+          </button>
+          <button class="legend-chip is-active" data-filter="brunch">
+            <span class="swatch swatch-brunch"></span>
+            Brunch
+          </button>
+          <button class="legend-chip is-active" data-filter="winery">
+            <span class="swatch swatch-winery"></span>
+            Wineries
+          </button>
+          <button class="legend-chip is-active" data-filter="event-venue">
+            <span class="swatch swatch-event-venue"></span>
+            Event venues
+          </button>
+        </div>
+        <p class="legend-note">
+          Click a landmark on the map or in the list to pin details and move the map there.
+        </p>
+      </aside>
+    </header>
+
+    <main class="layout">
+      <section class="map-card">
+        <div class="map-title-row">
+          <div>
+            <p class="section-label">Live map</p>
+            <h2>Howard and DC landmarks on a real world basemap with regional favorites</h2>
+          </div>
+        </div>
+
+        <div class="map-toolbar" aria-label="Map views">
+          <button class="map-jump is-active" data-view="campus">Main campus</button>
+          <button class="map-jump" data-view="hospital">Health sciences</button>
+          <button class="map-jump" data-view="dining">Food + wine</button>
+          <button class="map-jump" data-view="events">Event spots</button>
+          <button class="map-jump" data-view="regional">20-mile picks</button>
+          <button class="map-jump" data-view="all">All mapped landmarks</button>
+        </div>
+        <div class="map-toolbar" aria-label="Basemap styles">
+          <button class="map-jump map-style is-active" data-style="imagery">Aerial imagery</button>
+          <button class="map-jump map-style" data-style="street">Street map</button>
+        </div>
+        <form id="buildingFinder" class="building-finder" aria-label="Find parking near a destination">
+          <label class="sr-only" for="buildingSearchBox">Enter a destination to find nearby parking</label>
+          <div class="building-search-wrap">
+            <input
+              id="buildingSearchBox"
+              class="search-box building-search"
+              type="search"
+              placeholder="Enter where you want to go to find nearby parking"
+              autocomplete="off"
+              aria-autocomplete="list"
+              aria-controls="buildingSuggestions"
+              aria-expanded="false"
+            >
+            <div id="buildingSuggestions" class="search-suggestions is-hidden" role="listbox" aria-label="Destination suggestions"></div>
+          </div>
+          <button type="submit" class="map-jump finder-button">Find parking</button>
+        </form>
+        <div id="buildingSearchStatus" class="search-status" aria-live="polite">
+          Try `Founders Library`, `The Anthem`, `Ada's on the River`, or any address to find nearby parking.
+        </div>
+        <div id="parkingResults" class="parking-results is-hidden" aria-live="polite"></div>
+
+        <div id="map" class="leaflet-map" aria-label="Howard University and regional landmark map"></div>
+        <p class="tile-note">
+          The basemap loads from the internet. Aerial mode can usually zoom deeper than the street view where high-resolution imagery is available.
+        </p>
+      </section>
+
+      <aside class="details-card">
+        <p class="section-label">Selected landmark</p>
+        <div id="lotDetails" class="lot-details">
+          <h2>Pick a landmark</h2>
+          <p>Choose a campus or regional landmark on the map or from the list below to view its address, category, and notes.</p>
+        </div>
+
+        <div class="nav-card">
+          <div class="nav-card-header">
+            <p class="section-label">Navigation</p>
+            <h3>Get from your location to the selected place</h3>
+          </div>
+          <div class="nav-mode-group" aria-label="Travel mode">
+            <buttn class="map-jump nav-mode is-active" type="button" data-route-mode="walking">Walking</button>
+            <button class="map-jump nav-mode" type="button" data-route-mode="driving">Driving</button>
+          </div>
+          <div class="nav-actions">
+            <button id="useLocationButton" class="map-jump nav-action" type="button">Use my location</button>
+            <button id="navigateButton" class="map-jump nav-action" type="button" disabled>Navigate to selected</button>
+          </div>
+          <p id="navigationStatus" class="nav-status" aria-live="polite">
+            Select a landmark, then use your location to start navigation.
+          </p>
+          <div id="routeSummary" class="route-summary is-hidden" aria-live="polite"></div>
+          <div id="routeSteps" class="route-steps is-hidden" aria-live="polite"></div>
+          <a id="navigationLink" class="nav-link is-hidden" href="#" target="_blank" rel="noreferrer">
+            Open external directions
+          </a>
+        </div>
+
+        <div class="list-header">
+          <div>
+            <p class="section-label">Landmark directory</p>
+            <h3>Mapped Howard landmarks and regional picks</h3>
+          </div>
+          <div class="directory-search-wrap">
+            <input
+              id="searchBox"
+              class="search-box"
+              type="search"
+              placeholder="Search by landmark name or street"
+              autocomplete="off"
+              aria-autocomplete="list"
+              aria-controls="listSuggestions"
+              aria-expanded="false"
+            >
+            <div id="listSuggestions" class="search-suggestions is-hidden" role="listbox" aria-label="Landmark suggestions"></div>
+          </div>
+        </div>
+
+        <div id="lotList" class="lot-list" aria-live="polite"></div>
+      </aside>
+    </main>
+
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9cop0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="app-data.js"></script>
+  <script src="app-core.js"></script>
+  <script src="app-ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "Howard University Landmarks",
+  "short_name": "Howard Map",
+  "description": "Explore Howard University landmarks, nearby dining, event venues, and parking options on an interactive map.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#e8f0ff",
+  "theme_color": "#b21f2d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

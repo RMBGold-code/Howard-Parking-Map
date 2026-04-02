@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Howard University Landmarks icon">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#b21f2d"/>
+      <stop offset="100%" stop-color="#1565c0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="74" fill="url(#bg)"/>
+  <rect width="512" height="148" fill="#b21f2d"/>
+  <g fill="#fff8f6">
+    <text x="256" y="84" text-anchor="middle" font-family="Bahnschrift, Arial Narrow, Arial, sans-serif" font-size="58" font-weight="700">HU</text>
+    <path d="M256 121l57 40-13 19-44-31-44 31-13-19 57-40z"/>
+    <path d="M210 182h92v17h-92z"/>
+    <path d="M219 199h74v138a10 10 0 0 1-10 10h-54a10 10 0 0 1-10-10V199zm20 20v108h34V219z"/>
+    <path d="M171 334l18 6-21 62h176l-21-62 18-6 25 72-9 9H155l-9-9z"/>
+  </g>
+</svg>
