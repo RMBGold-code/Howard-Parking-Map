@@ -609,8 +609,6 @@ const categoryStyles = {
 };
 
 const foodVenueCategories = new Set(["restaurant", "brunch", "winery"]);
-const geocodeCacheKey = "howard-landmark-geocodes-v3";
-const correctionFlagsKey = "howard-landmark-corrections-v1";
 const foodPriceRanges = {
   "Ben's Chili Bowl": "$10-$18",
   "Busboys and Poets 14th & V": "$15-$26",
@@ -619,15 +617,15 @@ const foodPriceRanges = {
   "Ted's Bulletin 14th Street": "$15-$22",
   "The Red Hen": "$22-$38",
   "Rooster & Owl": "$125+ prix fixe",
-  Maydan: "$45-$70 per person",
+  "Maydan": "$45-$70 per person",
   "Thip Khao": "$15-$30",
   "Founding Farmers DC": "$15-$28",
   "Rasika Penn Quarter": "$22-$38",
-  Zaytinya: "$14-$32",
+  "Zaytinya": "$14-$32",
   "Jaleo DC": "$12-$30",
   "Unconventional Diner": "$16-$28",
   "St. Anselm DC": "$16-$26",
-  Albi: "$18-$40 a la carte",
+  "Albi": "$18-$40 a la carte",
   "Clyde's of Georgetown": "$17-$33",
   "bartaco The Wharf": "$15-$28",
   "Silver Diner Navy Yard": "$14-$26",

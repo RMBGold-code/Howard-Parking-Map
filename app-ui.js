@@ -474,100 +474,6 @@ async function searchExternalBuilding(queryText) {
   };
 }
 
-async function geocodeAddress(address) {
-  const params = new URLSearchParams({
-    q: address,
-    format: "jsonv2",
-    limit: "1",
-    countrycodes: "us",
-    viewbox: "-77.265,39.045,-76.905,38.765"
-  });
-
-  const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
-    headers: {
-      Accept: "application/json"
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error(`Geocoding failed with status ${response.status}`);
-  }
-
-  const results = await response.json();
-  const top = results[0];
-  if (!top) {
-    return null;
-  }
-
-  return {
-    lat: Number(top.lat),
-    lng: Number(top.lon)
-  };
-}
-
-async function geocodeLandmark(building) {
-  const combinedQuery = `${building.name}, ${building.address}`;
-  const combined = await geocodeAddress(combinedQuery);
-  if (combined) {
-    return combined;
-  }
-
-  return geocodeAddress(building.address);
-}
-
-function shouldVerifyByAddress(building) {
-  return ["restaurant", "brunch", "winery", "event-venue"].includes(building.category);
-}
-
-async function verifyBuildingLocations() {
-  const cache = readGeocodeCache();
-  let updated = false;
-
-  for (const building of buildings) {
-    if (!shouldVerifyByAddress(building)) {
-      continue;
-    }
-
-    const cacheId = `${building.name} | ${building.address}`;
-    const cached = cache[cacheId];
-    const cachedPoint = normalizePoint(cached?.lat, cached?.lng);
-    if (cachedPoint) {
-      setBaseCoordinates(building, cachedPoint.lat, cachedPoint.lng);
-      continue;
-    }
-
-    try {
-      const geocoded = await geocodeLandmark(building);
-      if (!geocoded) {
-        continue;
-      }
-
-      const verifiedPoint = normalizePoint(geocoded?.lat, geocoded?.lng);
-      if (!verifiedPoint) {
-        continue;
-      }
-
-      cache[cacheId] = verifiedPoint;
-      setBaseCoordinates(building, verifiedPoint.lat, verifiedPoint.lng);
-      updated = true;
-
-      // Keep requests polite; cached results prevent this on later loads.
-      await sleep(300);
-    } catch {
-      // Keep fallback coordinates when live geocoding is unavailable.
-    }
-  }
-
-  if (updated) {
-    writeGeocodeCache(cache);
-  }
-
-  renderDetails();
-  renderList();
-  syncMapState();
-  fitView(mapState.currentView);
-}
-
 async function handleBuildingSearch(event) {
   event.preventDefault();
   const rawQuery = buildingSearchBox.value.trim();
@@ -586,7 +492,7 @@ async function handleBuildingSearch(event) {
     : await searchExternalBuilding(rawQuery).catch(() => null);
 
   if (!destination) {
-    buildingSearchStatus.textContent = `No destination match found for \"${rawQuery}\".`;
+    buildingSearchStatus.textContent = `No destination match found for "${rawQuery}".`;
     return;
   }
 
@@ -812,5 +718,3 @@ try {
   console.error("Failed to initialize the live map.", error);
   buildingSearchStatus.textContent = "The live map hit a saved-data problem while loading. Refresh to retry; the directory is still available.";
 }
-
-verifyBuildingLocations();

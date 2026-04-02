@@ -84,10 +84,6 @@ function escapeHtml(text) {
   }[char]));
 }
 
-function sleep(ms) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
 function distanceMiles(from, to) {
   const earthRadiusMiles = 3958.8;
   const dLat = toRadians(to.lat - from.lat);
@@ -193,30 +189,6 @@ function formatParkingType(tags = {}) {
   return "Parking";
 }
 
-function readGeocodeCache() {
-  try {
-    return JSON.parse(window.localStorage.getItem(geocodeCacheKey) || "{}");
-  } catch {
-    return {};
-  }
-}
-
-function writeGeocodeCache(cache) {
-  try {
-    window.localStorage.setItem(geocodeCacheKey, JSON.stringify(cache));
-  } catch {
-    // Ignore storage failures.
-  }
-}
-
-function readCorrectionFlags() {
-  try {
-    return JSON.parse(window.localStorage.getItem(correctionFlagsKey) || "{}");
-  } catch {
-    return {};
-  }
-}
-
 function formatDuration(minutes) {
   if (minutes < 60) {
     return `${Math.round(minutes)} min`;
@@ -289,10 +261,6 @@ function selectedNavigationTarget() {
   return selectedParking() || selectedBuilding();
 }
 
-function correctionFlags() {
-  return readCorrectionFlags();
-}
-
 function normalizePoint(lat, lng) {
   const parsedLat = Number(lat);
   const parsedLng = Number(lng);
@@ -313,35 +281,6 @@ function normalizePoint(lat, lng) {
 
 function buildingPoint(building) {
   return normalizePoint(building?.lat, building?.lng);
-}
-
-function applyStoredCorrections() {
-  const flags = correctionFlags();
-  let updated = false;
-
-  buildings.forEach((building) => {
-    const hasSavedCorrection = Object.prototype.hasOwnProperty.call(flags, building.name);
-    if (!hasSavedCorrection) {
-      return;
-    }
-
-    const correctedPoint = normalizePoint(flags[building.name]?.lat, flags[building.name]?.lng);
-    if (!correctedPoint) {
-      delete flags[building.name];
-      updated = true;
-      return;
-    }
-
-    applyCoordinatesToBuilding(building, correctedPoint.lat, correctedPoint.lng);
-  });
-
-  if (updated) {
-    try {
-      window.localStorage.setItem(correctionFlagsKey, JSON.stringify(flags));
-    } catch {
-      // Ignore storage failures.
-    }
-  }
 }
 
 function clearParkingResults() {
@@ -751,40 +690,6 @@ function destinationFromLocalMatch(building) {
   };
 }
 
-function applyCoordinatesToBuilding(building, lat, lng) {
-  const point = normalizePoint(lat, lng);
-  if (!point) {
-    return false;
-  }
-
-  building.lat = point.lat;
-  building.lng = point.lng;
-
-  const layer = mapState.layers.get(building.name);
-  if (!layer) {
-    return true;
-  }
-
-  layer.setLatLng([point.lat, point.lng]);
-  return true;
-}
-
-function setBaseCoordinates(building, lat, lng) {
-  const point = normalizePoint(lat, lng);
-  if (!point) {
-    return false;
-  }
-
-  building.baseLat = point.lat;
-  building.baseLng = point.lng;
-
-  if (correctionFlags()[building.name]) {
-    return true;
-  }
-
-  return applyCoordinatesToBuilding(building, point.lat, point.lng);
-}
-
 function matchesViewMode(building) {
   if (mapState.currentView === "dining") {
     return ["restaurant", "brunch", "winery"].includes(building.category);
@@ -844,8 +749,6 @@ function createMap() {
   if (!window.L) {
     return;
   }
-
-  applyStoredCorrections();
 
   const campusCenter = [38.9211, -77.0181];
   const map = L.map("map", {
