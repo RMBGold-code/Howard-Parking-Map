@@ -105,8 +105,14 @@ function fitView(mode) {
     return;
   }
 
-  const allPoints = buildings.map((building) => [building.lat, building.lng]);
-  mapState.map.fitBounds(allPoints, { padding: [28, 28] });
+  const allPoints = buildings
+    .map((building) => buildingPoint(building))
+    .filter(Boolean)
+    .map((point) => [point.lat, point.lng]);
+
+  if (allPoints.length) {
+    mapState.map.fitBounds(allPoints, { padding: [28, 28] });
+  }
 }
 
 function localBuildingMatches(queryText, limit = 6, pool = buildings) {
@@ -329,8 +335,13 @@ function showSearchMarker(result) {
     return;
   }
 
+  const point = normalizePoint(result?.lat, result?.lng);
+  if (!point) {
+    return;
+  }
+
   if (!mapState.searchMarker) {
-    mapState.searchMarker = L.circleMarker([result.lat, result.lng], {
+    mapState.searchMarker = L.circleMarker([point.lat, point.lng], {
       radius: 12,
       color: "#10231e",
       weight: 3,
@@ -338,14 +349,14 @@ function showSearchMarker(result) {
       fillOpacity: 0.98
     }).addTo(mapState.map);
   } else {
-    mapState.searchMarker.setLatLng([result.lat, result.lng]);
+    mapState.searchMarker.setLatLng([point.lat, point.lng]);
   }
 
-  mapState.searchMarker.bindPopup(`popupMarkup({
+  mapState.searchMarker.bindPopup(popupMarkup({
     name: result.name,
     typeLabel: "Search result",
     address: result.address
-  }))`;
+  }));
   mapState.searchMarker.openPopup();
 }
 
@@ -382,7 +393,7 @@ async function fetchNearbyParking(destination) {
         return null;
       }
 
-      const tags = element.tags || ;
+      const tags = element.tags || {};
       return {
         id: `parking-${index + 1}`,
         name: tags.name || `Parking option ${index + 1}`,
@@ -407,9 +418,17 @@ function fitDestinationAndParking(destination, parkingSpots) {
     return;
   }
 
+  const destinationPoint = normalizePoint(destination?.lat, destination?.lng);
+  if (!destinationPoint) {
+    return;
+  }
+
   const points = [
-    [destination.lat, destination.lng],
-    ...parkingSpots.map((spot) => [spot.lat, spot.lng])
+    [destinationPoint.lat, destinationPoint.lng],
+    ...parkingSpots
+      .map((spot) => normalizePoint(spot?.lat, spot?.lng))
+      .filter(Boolean)
+      .map((point) => [point.lat, point.lng])
   ];
 
   if (points.length === 1) {
@@ -488,7 +507,7 @@ async function geocodeAddress(address) {
 
 async function geocodeLandmark(building) {
   const combinedQuery = `${building.name}, ${building.address}`;
-  combined = await geocodeAddress(combinedQuery);
+  const combined = await geocodeAddress(combinedQuery);
   if (combined) {
     return combined;
   }
@@ -503,8 +522,9 @@ async function verifyBuildingLocations() {
   for (const building of buildings) {
     const cacheId = `${building.name} | ${building.address}`;
     const cached = cache[cacheId];
-    if (cached && typeof cached.lat === "number" && typeof cached.lng === "number") {
-      setBaseCoordinates(building, cached.lat, cached.lng);
+    const cachedPoint = normalizePoint(cached?.lat, cached?.lng);
+    if (cachedPoint) {
+      setBaseCoordinates(building, cachedPoint.lat, cachedPoint.lng);
       continue;
     }
 
@@ -514,8 +534,13 @@ async function verifyBuildingLocations() {
         continue;
       }
 
-      cache[cacheId] = geocoded;
-      setBaseCoordinates(building, geocoded.lat, geocoded.lng);
+      const verifiedPoint = normalizePoint(geocoded?.lat, geocoded?.lng);
+      if (!verifiedPoint) {
+        continue;
+      }
+
+      cache[cacheId] = verifiedPoint;
+      setBaseCoordinates(building, verifiedPoint.lat, verifiedPoint.lng);
       updated = true;
 
       // Keep requests polite; cached results prevent this on later loads.
@@ -763,14 +788,21 @@ window.addEventListener("appinstalled", () => {
   setAppActionStatus("Howard University Landmarks was installed.");
 });
 
-createMap();
-setBasemap("street");
-fitView("campus");
 renderDetails();
 renderList();
-syncMapState();
 setRouteMode("walking");
 updateNavigationUI();
 updateInstallButtonVisibility();
 registerServiceWorker();
+
+try {
+  createMap();
+  setBasemap("street");
+  fitView("campus");
+  syncMapState();
+} catch (error) {
+  console.error("Failed to initialize the live map.", error);
+  buildingSearchStatus.textContent = "The live map hit a saved-data problem while loading. Refresh to retry; the directory is still available.";
+}
+
 verifyBuildingLocations();
