@@ -515,11 +515,19 @@ async function geocodeLandmark(building) {
   return geocodeAddress(building.address);
 }
 
+function shouldVerifyByAddress(building) {
+  return ["restaurant", "brunch", "winery", "event-venue"].includes(building.category);
+}
+
 async function verifyBuildingLocations() {
   const cache = readGeocodeCache();
   let updated = false;
 
   for (const building of buildings) {
+    if (!shouldVerifyByAddress(building)) {
+      continue;
+    }
+
     const cacheId = `${building.name} | ${building.address}`;
     const cached = cache[cacheId];
     const cachedPoint = normalizePoint(cached?.lat, cached?.lng);
@@ -578,7 +586,7 @@ async function handleBuildingSearch(event) {
     : await searchExternalBuilding(rawQuery).catch(() => null);
 
   if (!destination) {
-    buildingSearchStatus.textContent = `No destination match found for "${rawQuery}".`;
+    buildingSearchStatus.textContent = `No destination match found for \"${rawQuery}\".`;
     return;
   }
 
