@@ -69,56 +69,66 @@
       </div>
 
       <aside class="legend-card">
-        <h2>Filter landmarks by category</h2>
-        <div class="legend-list">
-          <button class="legend-chip is-active" data-filter="all">
-            <span class="swatch swatch-all"></span>
-            Show all
-          </button>
-          <button class="legend-chip is-active" data-filter="academic">
-            <span class="swatch swatch-non-reserved"></span>
-            Academic
-          </button>
-          <button class="legend-chip is-active" data-filter="student-life">
-            <span class="swatch swatch-reserved"></span>
-            Student life
-          </button>
-          <button class="legend-chip is-active" data-filter="arts">
-            <span class="swatch swatch-visitor"></span>
-            Arts
-          </button>
-          <button class="legend-chip is-active" data-filter="athletics">
-            <span class="swatch swatch-student"></span>
-            Athletics
-          </button>
-          <button class="legend-chip is-active" data-filter="health-sciences">
-            <span class="swatch swatch-hospital"></span>
-            Health sciences
-          </button>
-          <button class="legend-chip is-active" data-filter="library-admin">
-            <span class="swatch swatch-library-admin"></span>
-            Library / admin
-          </button>
-          <button class="legend-chip is-active" data-filter="restaurant">
-            <span class="swatch swatch-restaurant"></span>
-            Restaurants
-          </button>
-          <button class="legend-chip is-active" data-filter="brunch">
-            <span class="swatch swatch-brunch"></span>
-            Brunch
-          </button>
-          <button class="legend-chip is-active" data-filter="winery">
-            <span class="swatch swatch-winery"></span>
-            Wineries
-          </button>
-          <button class="legend-chip is-active" data-filter="event-venue">
-            <span class="swatch swatch-event-venue"></span>
-            Event venues
-          </button>
-        </div>
-        <p class="legend-note">
-          Click a landmark on the map or in the list to pin details and move the map there.
-        </p>
+        <details class="filter-dropdown" open>
+          <summary class="filter-summary">
+            <div>
+              <p class="section-label">Map filters</p>
+              <h2>Filter landmarks by category</h2>
+            </div>
+            <span class="filter-summary-icon" aria-hidden="true"></span>
+          </summary>
+          <div class="filter-dropdown-body">
+            <div class="legend-list">
+              <button class="legend-chip is-active" data-filter="all">
+                <span class="swatch swatch-all"></span>
+                Show all
+              </button>
+              <button class="legend-chip is-active" data-filter="academic">
+                <span class="swatch swatch-non-reserved"></span>
+                Academic
+              </button>
+              <button class="legend-chip is-active" data-filter="student-life">
+                <span class="swatch swatch-reserved"></span>
+                Student life
+              </button>
+              <button class="legend-chip is-active" data-filter="arts">
+                <span class="swatch swatch-visitor"></span>
+                Arts
+              </button>
+              <button class="legend-chip is-active" data-filter="athletics">
+                <span class="swatch swatch-student"></span>
+                Athletics
+              </button>
+              <button class="legend-chip is-active" data-filter="health-sciences">
+                <span class="swatch swatch-hospital"></span>
+                Health sciences
+              </button>
+              <button class="legend-chip is-active" data-filter="library-admin">
+                <span class="swatch swatch-library-admin"></span>
+                Library / admin
+              </button>
+              <button class="legend-chip is-active" data-filter="restaurant">
+                <span class="swatch swatch-restaurant"></span>
+                Restaurants
+              </button>
+              <button class="legend-chip is-active" data-filter="brunch">
+                <span class="swatch swatch-brunch"></span>
+                Brunch
+              </button>
+              <button class="legend-chip is-active" data-filter="winery">
+                <span class="swatch swatch-winery"></span>
+                Wineries
+              </button>
+              <button class="legend-chip is-active" data-filter="event-venue">
+                <span class="swatch swatch-event-venue"></span>
+                Event venues
+              </button>
+            </div>
+            <p class="legend-note">
+              Click a landmark on the map or in the list to pin details and move the map there.
+            </p>
+          </div>
+        </details>
       </aside>
     </header>
 
