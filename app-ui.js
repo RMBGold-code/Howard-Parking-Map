@@ -541,7 +541,9 @@ function deviceProfile() {
   const isiPhone = /iPhone/i.test(ua);
   const isiPad = /iPad/i.test(ua) || touchMac;
   const isIOS = isiPhone || isiPad;
+  const isFirefox = /Firefox/i.test(ua) && !/Seamonkey/i.test(ua);
   const isMac = /Macintosh|Mac OS X/i.test(ua) && !isIOS;
+  const isWindows = /Windows/i.test(ua);
   const isAndroid = /Android/i.test(ua);
   const isSafari = /Safari/i.test(ua) && !/Chrome|CriOS|Edg|OPR|Firefox/i.test(ua);
   const isChromium = /Chrome|CriOS|Edg/i.test(ua);
@@ -550,7 +552,9 @@ function deviceProfile() {
     isiPhone,
     isiPad,
     isIOS,
+    isFirefox,
     isMac,
+    isWindows,
     isAndroid,
     isSafari,
     isChromium
@@ -562,6 +566,14 @@ function installShortcutHelpText() {
 
   if (profile.isiPhone || profile.isiPad) {
     return "On iPhone or iPad in Safari, tap Share, then Add to Home Screen.";
+  }
+
+  if (profile.isFirefox && profile.isAndroid) {
+    return "In Firefox on Android, open the browser menu, then tap Install or Add to Home Screen.";
+  }
+
+  if (profile.isFirefox && profile.isWindows) {
+    return "In Firefox on Windows 143 or later, click the web app button in the address bar to install this site as a web app. This is not available in the Microsoft Store build of Firefox.";
   }
 
   if (profile.isMac && profile.isSafari) {
