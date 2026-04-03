@@ -492,7 +492,7 @@ async function handleBuildingSearch(event) {
     : await searchExternalBuilding(rawQuery).catch(() => null);
 
   if (!destination) {
-    buildingSearchStatus.textContent = `No destination match found for "${rawQuery}".`;
+    buildingSearchStatus.textContent = `No destination match found for \"${rawQuery}\".`;
     return;
   }
 
@@ -536,7 +536,7 @@ function isInstalledApp() {
 }
 
 function updateInstallButtonVisibility() {
-  installAppButton.hidden = isInstalledApp() || !deferredInstallPrompt;
+  installAppButton.hidden = !isInstalledApp();
 }
 
 function updateQrPanel() {
@@ -547,8 +547,13 @@ function updateQrPanel() {
 }
 
 async function installApp() {
+  if (isInstalledApp()) {
+    setAppActionStatus("You already have installed the app.");
+    return;
+  }
+
   if (!deferredInstallPrompt) {
-    setAppActionStatus("This app can be installed after it is opened from a supported hosted URL.");
+    setAppActionStatus("Use Share app or the QR code to open the hosted app.");
     return;
   }
 
@@ -706,7 +711,6 @@ window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredInstallPrompt = event;
   updateInstallButtonVisibility();
-  setAppActionStatus("This app is ready to install.");
 });
 
 window.addEventListener("appinstalled", () => {

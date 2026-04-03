@@ -635,6 +635,51 @@ const foodPriceRanges = {
   "District Winery": "$12-$20 plates, $20 tastings"
 };
 
+const correctionFlagsKey = "howard-landmark-corrections-v1";
+
+function normalizeStoredPoint(lat, lng) {
+  const parsedLat = Number(lat);
+  const parsedLng = Number(lng);
+
+  if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLng)) {
+    return null;
+  }
+
+  if (parsedLat < -90 || parsedLat > 90 || parsedLng < -180 || parsedLng > 180) {
+    return null;
+  }
+
+  return {
+    lat: parsedLat,
+    lng: parsedLng
+  };
+}
+
+function applyStoredCorrectionCoordinates() {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return;
+  }
+
+  let flags;
+  try {
+    flags = JSON.parse(window.localStorage.getItem(correctionFlagsKey) || "{}");
+  } catch {
+    return;
+  }
+
+  buildings.forEach((building) => {
+    const point = normalizeStoredPoint(flags?.[building.name]?.lat, flags?.[building.name]?.lng);
+    if (!point) {
+      return;
+    }
+
+    building.lat = point.lat;
+    building.lng = point.lng;
+  });
+}
+
+applyStoredCorrectionCoordinates();
+
 buildings.forEach((building) => {
   building.baseLat = building.lat;
   building.baseLng = building.lng;
