@@ -595,11 +595,32 @@ function updateInstallButtonVisibility() {
   installAppButton.hidden = isInstalledApp() || !hostedAppUrl();
 }
 
+function updateInstallHelpUI() {
+  const profile = deviceProfile();
+  const showIosHelp = hostedAppUrl() && !isInstalledApp() && profile.isIOS;
+
+  installHelpPanel.hidden = !showIosHelp;
+
+  if (showIosHelp) {
+    installHelpTitle.textContent = "Install on iPhone or iPad";
+    installHelpBody.textContent = "Tap Install shortcut, then use Safari's Share button and choose Add to Home Screen.";
+  } else {
+    installHelpTitle.textContent = "";
+    installHelpBody.textContent = "";
+  }
+}
+
 function updateQrPanel() {
   const url = installAppUrl();
+  const profile = deviceProfile();
   appQrPanel.hidden = false;
   appQrLink.href = url;
-  setAppActionStatus("Scan the QR code to open the app on your phone.");
+  appQrNote.textContent = profile.isIOS
+    ? "After the page opens in Safari, tap Install shortcut or use Share, then Add to Home Screen."
+    : "Open the link, then use your phone browser's install or Add to Home Screen option.";
+  setAppActionStatus(profile.isIOS
+    ? "On iPhone or iPad, tap Install shortcut for quick setup help."
+    : "Scan the QR code to open the app on your phone.");
 }
 
 async function installApp() {
@@ -614,6 +635,7 @@ async function installApp() {
   }
 
   if (!deferredInstallPrompt) {
+    updateInstallHelpUI();
     setAppActionStatus(installShortcutHelpText());
     return;
   }
@@ -802,6 +824,7 @@ renderList();
 setRouteMode("walking");
 updateNavigationUI();
 updateInstallButtonVisibility();
+updateInstallHelpUI();
 updateQrPanel();
 registerServiceWorker();
 
