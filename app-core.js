@@ -20,6 +20,7 @@ const appQrNote = document.getElementById("appQrNote");
 const appActionStatus = document.getElementById("appActionStatus");
 const useLocationButton = document.getElementById("useLocationButton");
 const navigateButton = document.getElementById("navigateButton");
+const clearSelectionButton = document.getElementById("clearSelectionButton");
 const navigationStatus = document.getElementById("navigationStatus");
 const navigationLink = document.getElementById("navigationLink");
 const routeSummary = document.getElementById("routeSummary");
@@ -284,6 +285,14 @@ function clearRouteDetails() {
   routeSteps.innerHTML = "";
 }
 
+function syncClearSelectionButton() {
+  if (!clearSelectionButton) {
+    return;
+  }
+
+  clearSelectionButton.disabled = !(selectedBuildingName || mapState.selectedParkingId);
+}
+
 function selectedParking() {
   return mapState.parkingOptions.find((spot) => spot.id === mapState.selectedParkingId) || null;
 }
@@ -353,6 +362,7 @@ function selectParkingSpot(id, moveMap = false, snapToMap = false) {
   clearRouteDetails();
   syncParkingSelection();
   updateNavigationUI();
+  syncClearSelectionButton();
 
   const spot = selectedParking();
   if (mapState.currentLocation && spot) {
@@ -421,7 +431,7 @@ function showParkingMarkers(destination, parkingSpots) {
         <p class="popup-meta">${escapeHtml(spot.typeLabel)}<br>${escapeHtml(spot.address)}<br>${formatDistanceMiles(spot.distanceMeters)} from ${escapeHtml(destination.name)}</p>
       </div>
     `);
-    marker.on("click", () => selectParkingSpot(spot.id, false, false));
+      marker.on("click", () => selectParkingSpot(spot.id, false, false));
 
     return { id: spot.id, marker };
   });
@@ -518,6 +528,23 @@ function updateNavigationUI() {
   const miles = distanceMiles(origin, destination);
   const direction = compassDirection(bearingDegrees(origin, destination));
   navigationStatus.textContent = `Ready to build a ${mapState.routeMode} route to ${destination.name}. It is about ${miles.toFixed(2)} miles ${direction} of you.`;
+}
+
+function clearSelection() {
+  selectedBuildingName = "";
+  mapState.selectedParkingId = "";
+
+  if (mapState.map) {
+    mapState.map.closePopup();
+  }
+
+  clearNavigationGuide();
+  renderDetails();
+  renderList();
+  syncMapState();
+  syncParkingSelection();
+  updateNavigationUI();
+  syncClearSelectionButton();
 }
 
 function setCurrentLocation(lat, lng, accuracy = 0) {
@@ -758,6 +785,7 @@ function detailMarkup(building) {
   const style = categoryStyles[building.category];
   const tint = hexToRgba(style.color, 0.12);
   const border = hexToRgba(style.color, 0.32);
+  const hours = buildingHours(building);
   return `
     <div class="detail-shell" style="--category-color:${style.color}; --category-tint:${tint}; --category-border:${border}">
       <h2>${building.name}</h2>
@@ -774,6 +802,10 @@ function detailMarkup(building) {
         <div class="detail-row">
           <strong>Category</strong>
           <span>${style.label}</span>
+        </div>
+        <div class="detail-row">
+          <strong>Hours</strong>
+          <span>${hours}</span>
         </div>
       </div>
     </div>
@@ -835,7 +867,7 @@ function createMap() {
       className: "lot-label"
     });
     layer.bindPopup(popupMarkup(building));
-    layer.on("click", () => selectBuilding(building.name, true, false));
+      layer.on("click", () => selectBuilding(building.name, true, false));
     mapState.layers.set(building.name, layer);
   });
 
@@ -867,10 +899,12 @@ function renderDetails() {
         <div class="detail-row"><strong>Navigation options</strong></div>
       </div>
     `;
+    syncClearSelectionButton();
     return;
   }
 
   buildingDetails.innerHTML = detailMarkup(building);
+  syncClearSelectionButton();
 }
 
 function renderList() {
@@ -887,6 +921,7 @@ function renderList() {
     const tint = hexToRgba(style.color, 0.12);
     const border = hexToRgba(style.color, 0.3);
     const priceRange = averagePriceRange(building);
+    const hours = buildingHours(building);
     return `
       <button
         class="lot-button ${selected}"
@@ -902,6 +937,7 @@ function renderList() {
         </div>
         <div class="lot-meta"><strong class="lot-inline-label">${building.shortLabel}</strong> | ${building.typeLabel}</div>
         <div class="lot-address">${building.address}</div>
+        <div class="lot-hours">Hours: ${hours}</div>
         ${priceRange ? `<div class="lot-price">Avg. price: ${priceRange}</div>` : ""}
       </button>
     `;

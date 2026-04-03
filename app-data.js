@@ -634,3 +634,77 @@ const foodPriceRanges = {
   "miXt Food Hall": "$10-$25",
   "District Winery": "$12-$20 plates, $20 tastings"
 };
+
+const categoryDefaultHours = {
+  academic: "Typical weekday class and office hours; exact building access varies by department and course schedule.",
+  "student-life": "Typical weekday student-service hours; residence and event access vary by building.",
+  arts: "Open around classes, rehearsals, performances, and events; exact access varies.",
+  athletics: "Open around athletics practices, games, recreation, and scheduled events.",
+  "health-sciences": "Typical weekday academic or clinical hours; exact access varies by program or patient service.",
+  "library-admin": "Typical weekday service hours; public-facing desks may follow separate schedules.",
+  restaurant: "Hours vary by restaurant; see listed schedule when available.",
+  brunch: "Hours vary by restaurant; see listed brunch or all-day service schedule when available.",
+  winery: "Open around tasting-room service and private events; see listed schedule when available.",
+  "event-venue": "Open around scheduled shows, games, conventions, and event operations."
+};
+
+const locationHours = {
+  "Howard University College of Pharmacy": "Mon-Fri 9:00 AM-5:00 PM (published office hours; academic access can vary).",
+  "College of Dentistry": "Mon-Fri 8:00 AM-5:00 PM.",
+  "College of Medicine": "Mon-Fri 8:30 AM-5:00 PM (published office hours; building access can vary).",
+  "Louis Stokes Health Sciences Library": "Mon-Fri 8:00 AM-10:00 PM; Sat-Sun 10:00 AM-6:00 PM.",
+  "Howard University Hospital": "Open 24/7.",
+  "Mordecai Wyatt Johnson Administration Building": "Typical admin hours Mon-Fri 9:00 AM-5:00 PM.",
+  "School of Business": "Typical weekday class and office hours with some evening access tied to classes and events.",
+  "Founders Library": "Mon-Thu 8:00 AM-10:00 PM; Fri 8:00 AM-5:00 PM; Sat 9:00 AM-6:00 PM; Sun 1:30 PM-10:00 PM.",
+  "Blackburn University Center": "Mon-Fri 9:00 AM-5:00 PM.",
+  "Alain Locke Hall": "Typical weekday class and office hours; evening and weekend access varies by scheduling.",
+  "School of Education": "Typical weekday class and office hours; evening access varies by scheduling.",
+  "Frederick Douglass Memorial Hall": "Typical weekday class and office hours; evening access varies by scheduling.",
+  "Lulu Vere Childers Hall": "Typical weekday class and rehearsal hours; recital and event access varies.",
+  "Ira Aldridge Theater": "Open around rehearsals, productions, and scheduled performances.",
+  "Cramton Auditorium": "Open around scheduled university programs, rehearsals, and performances.",
+  "Greene Stadium": "Open around athletics practices, games, and scheduled events.",
+  "Burr Gymnasium": "Open around athletics, recreation, practices, and scheduled events.",
+  "Cook Hall": "Residence hall; resident access is generally 24/7, with limited public access.",
+  "Drew Hall": "Residence hall; resident access is generally 24/7, with limited public access.",
+  "Just Hall": "Typical weekday class and lab hours; evening access varies by schedule.",
+  "Mackey Building": "Typical weekday class and office hours; evening access varies by schedule.",
+  "Howard Center": "Mon-Fri 10:00 AM-6:00 PM; Sat 10:00 AM-3:00 PM; Sun closed.",
+  "Ben's Chili Bowl": "Sun-Thu 11:00 AM-11:00 PM; Fri-Sat 11:00 AM-4:00 AM.",
+  "Busboys and Poets 14th & V": "Mon-Thu 8:00 AM-10:00 PM; Fri 8:00 AM-11:00 PM; Sat 9:00 AM-11:00 PM; Sun 9:00 AM-10:00 PM.",
+  "Le Diplomate": "Mon-Thu 12:00 PM-3:00 PM, 5:00 PM-11:00 PM; Fri 12:00 PM-3:00 PM, 5:00 PM-12:00 AM; Sat 9:30 AM-12:00 AM; Sun 9:30 AM-11:00 PM.",
+  "Florida Avenue Grill": "Closed Mon; Tue-Sat 8:00 AM-8:30 PM; Sun 8:00 AM-4:30 PM.",
+  "Ted's Bulletin 14th Street": "Sun-Thu 7:00 AM-9:45 PM; Fri-Sat 7:00 AM-10:45 PM.",
+  "The Red Hen": "Mon-Thu 5:30 PM-10:00 PM; Fri-Sun 5:00 PM-10:00 PM.",
+  "Rooster & Owl": "Tue-Sat from 5:00 PM; closed Sun-Mon.",
+  "Maydan": "Tue-Sun kitchen 5:00 PM-10:00 PM; bar 5:00 PM-10:45 PM.",
+  "Thip Khao": "Sun-Mon 5:00 PM-10:00 PM; Tue closed; dinner service continues later in the week, with exact nightly hours varying by reservations service.",
+  "Founding Farmers DC": "Mon-Fri breakfast 7:00 AM-11:00 AM; Mon-Thu lunch/dinner 11:00 AM-10:00 PM; Fri-Sat 11:00 AM-11:00 PM; Sun 11:00 AM-10:00 PM.",
+  "Rasika Penn Quarter": "Lunch Mon-Fri 11:30 AM-2:30 PM and Sun 11:30 AM-2:30 PM; dinner Sun 4:30 PM-9:30 PM, Mon-Thu 5:00 PM-10:00 PM, Fri 5:00 PM-10:30 PM, Sat 4:30 PM-10:30 PM.",
+  "Zaytinya": "Mon-Thu 11:30 AM-10:00 PM; Fri 11:30 AM-11:00 PM; Sat 11:00 AM-11:00 PM; Sun 11:00 AM-10:00 PM.",
+  "Jaleo DC": "Mon-Thu 11:30 AM-10:00 PM; Fri-Sat 11:30 AM-11:00 PM; Sun 11:30 AM-10:00 PM.",
+  "Unconventional Diner": "Daily 8:00 AM-10:00 PM.",
+  "St. Anselm DC": "Mon-Thu dinner 5:00 PM-10:00 PM; Fri lunch 12:00 PM-3:00 PM and dinner 5:00 PM-11:00 PM; Sat brunch 10:30 AM-3:00 PM, mid-day 3:00 PM-4:00 PM, dinner 4:00 PM-11:00 PM; Sun brunch 10:30 AM-3:00 PM, mid-day 3:00 PM-4:00 PM, dinner 4:00 PM-10:00 PM.",
+  "Albi": "Tue-Sat 5:00 PM-10:00 PM; closed Sun-Mon.",
+  "Clyde's of Georgetown": "Mon-Thu 11:00 AM-1:00 AM; Fri-Sat 11:00 AM-2:00 AM; Sun 10:00 AM-1:00 AM.",
+  "bartaco The Wharf": "Daily from 11:00 AM until late.",
+  "Silver Diner Navy Yard": "Sun-Thu 7:00 AM-11:00 PM; Fri-Sat 7:00 AM-2:00 AM.",
+  "Ada's on the River": "Mon-Fri 11:30 AM-11:00 PM; Sat-Sun 10:00 AM-11:00 PM; brunch Sat-Sun 10:00 AM-3:30 PM.",
+  "Ambar Clarendon": "Mon-Thu 11:30 AM-9:30 PM; Fri 11:30 AM-10:30 PM; Sat 9:30 AM-10:30 PM; Sun 9:30 AM-9:30 PM.",
+  "miXt Food Hall": "Mon 8:00 AM-8:00 PM; Tue-Wed 8:00 AM-9:00 PM; Thu 8:00 AM-10:00 PM; Fri 8:00 AM-12:00 AM; Sat 9:00 AM-12:00 AM; Sun 9:00 AM-8:00 PM.",
+  "District Winery": "Tasting room closed Mon-Tue; Wed-Fri 4:00 PM-9:00 PM; Sat 12:00 PM-9:00 PM; Sun 12:00 PM-7:00 PM.",
+  "Howard Theatre": "Show and event hours vary by schedule.",
+  "9:30 Club": "Concert-night hours vary by show; box office and doors change by event.",
+  "Lincoln Theatre": "Box office Mon-Fri 10:00 AM-5:30 PM; event hours vary by show.",
+  "Walter E. Washington Convention Center": "Open around scheduled conventions, meetings, and public events; event hours vary.",
+  "Capital One Arena": "Open around scheduled games, concerts, and arena events; doors vary by ticketed event.",
+  "The Anthem": "Show and box-office hours vary by event.",
+  "Nationals Park": "Game days only; gates typically open 75-80 minutes before first pitch, and the main box office opens 4 hours before first pitch.",
+  "MGM National Harbor": "Resort and casino operations run 24/7; specific venue, dining, and event hours vary by outlet.",
+  "The Fillmore Silver Spring": "Event venue hours vary by show; the box office opens 2 hours before general-admission doors and from 2:00 PM on Wed-Fri event days."
+};
+
+function buildingHours(building) {
+  return locationHours[building.name] || categoryDefaultHours[building.category] || "Hours vary.";
+}

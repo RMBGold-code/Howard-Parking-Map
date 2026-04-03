@@ -600,6 +600,17 @@ body {
   margin-bottom: 8px;
 }
 
+.details-actions {
+  margin-top: 12px;
+}
+
+.detail-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .nav-card {
   margin-top: 18px;
   padding: 18px;
@@ -878,6 +889,14 @@ body {
   font-size: 0.9rem;
   font-weight: 700;
   line-height: 1.4;
+}
+
+.lot-hours {
+  margin-top: 8px;
+  color: #31537d;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .remote-grid {
