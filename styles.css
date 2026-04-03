@@ -268,15 +268,10 @@ body {
   font-size: 1.45rem;
 }
 
-.list-header > :first-child {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.list-header h3 {
+.directory-summary h3 {
   font-size: 1.36rem;
   line-height: 1.2;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .legend-list {
@@ -333,7 +328,7 @@ body {
 
 .directory-search-wrap {
   position: relative;
-  width: min(340px, 100%);
+  width: 100%;
 }
 
 .map-jump {
@@ -387,8 +382,7 @@ body {
   gap: 22px;
 }
 
-.map-title-row,
-.list-header {
+.map-title-row {
   display: flex;
   justify-content: space-between;
   gap: 16px;
@@ -747,11 +741,59 @@ body {
   width: 100%;
 }
 
+.directory-dropdown {
+  margin-top: 18px;
+  border: 1px solid rgba(16, 59, 77, 0.14);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+}
+
+.directory-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 20px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.directory-summary::-webkit-details-marker {
+  display: none;
+}
+
+.directory-summary .section-label {
+  margin-bottom: 4px;
+}
+
+.directory-summary-icon {
+  width: 12px;
+  height: 12px;
+  border-right: 3px solid #103b4d;
+  border-bottom: 3px solid #103b4d;
+  transform: rotate(45deg);
+  transition: transform 180ms ease;
+  flex: 0 0 auto;
+  margin-right: 6px;
+}
+
+.directory-dropdown[open] .directory-summary-icon {
+  transform: rotate(225deg);
+  margin-top: 6px;
+}
+
+.directory-dropdown-body {
+  display: grid;
+  gap: 14px;
+  padding: 0 20px 20px;
+}
+
 .lot-list {
   display: grid;
   gap: 10px;
   max-height: 640px;
-  margin-top: 18px;
+  margin-top: 0;
   overflow: auto;
   padding-right: 6px;
 }
@@ -931,14 +973,13 @@ a {
   }
 
   .map-title-row,
-  .list-header,
   .building-finder {
     align-items: start;
     flex-direction: column;
   }
 
-  .list-header h3 {
-    white-space: normal;
+  .directory-summary {
+    align-items: start;
   }
 
   .search-box {

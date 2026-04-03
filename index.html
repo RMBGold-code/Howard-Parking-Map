@@ -202,27 +202,32 @@
           </a>
         </div>
 
-        <div class="list-header">
-          <div>
-            <p class="section-label">Landmark directory</p>
-            <h3>Mapped Howard landmarks<br>and regional picks</h3>
-          </div>
-          <div class="directory-search-wrap">
-            <input
-              id="searchBox"
-              class="search-box"
-              type="search"
-              placeholder="Search by landmark"
-              autocomplete="off"
-              aria-autocomplete="list"
-              aria-controls="listSuggestions"
-              aria-expanded="false"
-            >
-            <div id="listSuggestions" class="search-suggestions is-hidden" role="listbox" aria-label="Landmark suggestions"></div>
-          </div>
-        </div>
+        <details class="directory-dropdown">
+          <summary class="directory-summary">
+            <div>
+              <p class="section-label">Landmark directory</p>
+              <h3>Mapped Howard landmarks<br>and regional picks</h3>
+            </div>
+            <span class="directory-summary-icon" aria-hidden="true"></span>
+          </summary>
+          <div class="directory-dropdown-body">
+            <div class="directory-search-wrap">
+              <input
+                id="searchBox"
+                class="search-box"
+                type="search"
+                placeholder="Search by landmark"
+                autocomplete="off"
+                aria-autocomplete="list"
+                aria-controls="listSuggestions"
+                aria-expanded="false"
+              >
+              <div id="listSuggestions" class="search-suggestions is-hidden" role="listbox" aria-label="Landmark suggestions"></div>
+            </div>
 
-        <div id="lotList" class="lot-list" aria-live="polite"></div>
+            <div id="lotList" class="lot-list" aria-live="polite"></div>
+          </div>
+        </details>
       </aside>
     </main>
 
