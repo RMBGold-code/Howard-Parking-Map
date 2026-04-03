@@ -565,7 +565,7 @@ async function shareApp() {
   }
 
   const shareData = {
-    title: "Howard University Landmarks",
+    title: "Howard+DC landmarks",
     text: "Explore Howard University landmarks, nearby dining, event venues, and parking in one interactive app.",
     url
   };
@@ -705,7 +705,7 @@ window.addEventListener("beforeinstallprompt", (event) => {
 window.addEventListener("appinstalled", () => {
   deferredInstallPrompt = null;
   updateInstallButtonVisibility();
-  setAppActionStatus("Howard University Landmarks was installed.");
+  setAppActionStatus("Howard+DC landmarks was installed.");
 });
 
 renderDetails();

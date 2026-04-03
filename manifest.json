@@ -1,6 +1,6 @@
 {
-  "name": "Howard University Landmarks",
-  "short_name": "Howard Map",
+  "name": "Howard+DC landmarks",
+  "short_name": "Howard+DC landmarks",
   "description": "Explore Howard University landmarks, nearby dining, event venues, and parking options on an interactive map.",
   "start_url": ".",
   "scope": ".",
