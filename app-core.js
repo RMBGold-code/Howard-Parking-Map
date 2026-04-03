@@ -50,9 +50,7 @@ const mapState = {
   userAccuracyRing: null,
   navigationLine: null,
   routeMode: "walking",
-  routeData: null,
-  routePreview: null,
-  routePreviewPendingKey: ""
+  routeData: null
 };
 
 let activeFilter = "all";
@@ -192,20 +190,6 @@ function routeModeLabel(mode) {
   return mode === "driving" ? "Driving" : "Walking";
 }
 
-function currentRoutePreviewKey(origin = mapState.currentLocation, destination = selectedNavigationTarget()) {
-  if (!origin || !destination) {
-    return "";
-  }
-
-  return [
-    mapState.routeMode,
-    origin.lat.toFixed(5),
-    origin.lng.toFixed(5),
-    destination.lat.toFixed(5),
-    destination.lng.toFixed(5)
-  ].join("|");
-}
-
 function directionsUrl(origin, destination) {
   const params = new URLSearchParams({
     api: "1",
@@ -299,11 +283,6 @@ function clearRouteDetails() {
   routeSummary.textContent = "";
   routeSteps.classList.add("is-hidden");
   routeSteps.innerHTML = "";
-}
-
-function clearRoutePreview() {
-  mapState.routePreview = null;
-  mapState.routePreviewPendingKey = "";
 }
 
 function syncClearSelectionButton() {
@@ -505,71 +484,6 @@ function renderRouteDetails(route) {
   routeSteps.classList.toggle("is-hidden", steps.length === 0);
 }
 
-async function requestRoutePreview() {
-  const destination = selectedNavigationTarget();
-  const origin = mapState.currentLocation;
-
-  if (!origin || !destination) {
-    clearRoutePreview();
-    return;
-  }
-
-  const previewKey = currentRoutePreviewKey(origin, destination);
-  if (!previewKey || mapState.routePreviewPendingKey === previewKey || mapState.routePreview?.key === previewKey || mapState.routeData) {
-    return;
-  }
-
-  mapState.routePreviewPendingKey = previewKey;
-
-  const coordinates = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
-  const params = new URLSearchParams({
-    overview: "false",
-    steps: "false"
-  });
-
-  try {
-    const response = await fetch(`https://router.project-osrm.org/route/v1/${routeProfile(mapState.routeMode)}/${coordinates}?${params.toString()}`, {
-      headers: {
-        Accept: "application/json"
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Preview failed with status ${response.status}`);
-    }
-
-    const payload = await response.json();
-    const route = payload.routes?.[0];
-    if (!route) {
-      throw new Error("No preview route returned");
-    }
-
-    if (currentRoutePreviewKey() !== previewKey) {
-      return;
-    }
-
-    mapState.routePreview = {
-      key: previewKey,
-      distance: route.distance,
-      duration: route.duration
-    };
-  } catch {
-    if (currentRoutePreviewKey() !== previewKey) {
-      return;
-    }
-
-    mapState.routePreview = {
-      key: previewKey,
-      error: true
-    };
-  } finally {
-    if (mapState.routePreviewPendingKey === previewKey) {
-      mapState.routePreviewPendingKey = "";
-    }
-    updateNavigationUI();
-  }
-}
-
 function updateNavigationUI() {
   const destination = selectedNavigationTarget();
   const origin = mapState.currentLocation;
@@ -589,21 +503,18 @@ function updateNavigationUI() {
 
   if (!destination && !origin) {
     navigationStatus.textContent = "Select a landmark, then use your location to start navigation.";
-    clearRoutePreview();
     clearNavigationGuide();
     return;
   }
 
   if (!destination) {
     navigationStatus.textContent = "Your location is set. Pick a landmark to draw the route.";
-    clearRoutePreview();
     clearNavigationGuide();
     return;
   }
 
   if (!origin) {
     navigationStatus.textContent = `Selected: ${destination.name}. Use your location to navigate there.`;
-    clearRoutePreview();
     clearNavigationGuide();
     return;
   }
@@ -614,28 +525,9 @@ function updateNavigationUI() {
   }
 
   clearRouteDetails();
-  const previewKey = currentRoutePreviewKey(origin, destination);
-  const preview = mapState.routePreview;
-
-  if (preview?.key === previewKey && !preview.error) {
-    navigationStatus.textContent = `${routeModeLabel(mapState.routeMode)} estimate to ${destination.name}: about ${formatDuration(preview.duration / 60)} over ${formatDistanceMiles(preview.distance)}.`;
-    return;
-  }
-
-  if (preview?.key === previewKey && preview.error) {
-    const miles = distanceMiles(origin, destination);
-    const direction = compassDirection(bearingDegrees(origin, destination));
-    navigationStatus.textContent = `${routeModeLabel(mapState.routeMode)} timing is unavailable right now. ${destination.name} is about ${miles.toFixed(2)} miles ${direction} of you as the crow flies.`;
-    return;
-  }
-
-  if (mapState.routePreviewPendingKey === previewKey) {
-    navigationStatus.textContent = `Calculating ${routeModeLabel(mapState.routeMode).toLowerCase()} time to ${destination.name}...`;
-    return;
-  }
-
-  navigationStatus.textContent = `Calculating ${routeModeLabel(mapState.routeMode).toLowerCase()} time to ${destination.name}...`;
-  requestRoutePreview();
+  const miles = distanceMiles(origin, destination);
+  const direction = compassDirection(bearingDegrees(origin, destination));
+  navigationStatus.textContent = `Ready to build a ${mapState.routeMode} route to ${destination.name}. It is about ${miles.toFixed(2)} miles ${direction} of you.`;
 }
 
 function clearSelection() {
@@ -647,7 +539,6 @@ function clearSelection() {
   }
 
   clearNavigationGuide();
-  clearRoutePreview();
   renderDetails();
   renderList();
   syncMapState();
@@ -790,11 +681,6 @@ async function fetchTurnByTurnRoute() {
     }
 
     mapState.routeData = route;
-    mapState.routePreview = {
-      key: currentRoutePreviewKey(origin, destination),
-      distance: route.distance,
-      duration: route.duration
-    };
     mapState.map.fitBounds(points, { padding: [32, 32] });
     renderRouteDetails(route);
     updateNavigationUI();
@@ -854,7 +740,7 @@ function popupMarkup(building) {
 }
 
 function selectedBuilding() {
-  return buildings.find((item) => item.name === selectedBuildingName)) || null;
+  return buildings.find((item) => item.name === selectedBuildingName) || null;
 }
 
 function destinationFromLocalMatch(building) {
@@ -1113,4 +999,3 @@ function focusBuildingOnMap(building) {
   });
   layer.openPopup();
 }
-
