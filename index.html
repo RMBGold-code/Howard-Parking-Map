@@ -198,6 +198,21 @@
           </a>
         </div>
 
+        <div class="correction-card">
+          <div class="nav-card-header">
+            <p class="section-label">Marker correction</p>
+            <h3>Fix a landmark location</h3>
+          </div>
+          <div class="correction-actions">
+            <button id="markCorrectionButton" class="map-jump nav-action" type="button">Mark selected on map</button>
+            <button id="clearCorrectionButton" class="map-jump nav-action" type="button" disabled>Clear selected correction</button>
+          </div>
+          <p id="correctionStatus" class="nav-status" aria-live="polite">
+            Select a landmark, then click `Mark selected on map` and click the correct spot on the map.
+          </p>
+          <div id="correctionList" class="correction-list is-hidden" aria-live="polite"></div>
+        </div>
+
         <div class="list-header">
           <div>
             <p class="section-label">Landmark directory</p>

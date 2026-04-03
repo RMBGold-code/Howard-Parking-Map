@@ -678,9 +678,11 @@ function applyStoredCorrectionCoordinates() {
   });
 }
 
-applyStoredCorrectionCoordinates();
-
 buildings.forEach((building) => {
+  building.sourceLat = building.lat;
+  building.sourceLng = building.lng;
   building.baseLat = building.lat;
   building.baseLng = building.lng;
 });
+
+applyStoredCorrectionCoordinates();

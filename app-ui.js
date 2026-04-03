@@ -1,5 +1,7 @@
 function selectBuilding(name, moveMap = false) {
   selectedBuildingName = name;
+  ensureCorrectionState();
+  mapState.correctionPending = false;
   mapState.selectedParkingId = "";
   const building = selectedBuilding();
   renderDetails();
@@ -7,6 +9,7 @@ function selectBuilding(name, moveMap = false) {
   syncMapState();
   syncParkingSelection();
   updateNavigationUI();
+  updateCorrectionUI();
 
   if (mapState.currentLocation && building) {
     clearRouteDetails();
@@ -113,6 +116,275 @@ function fitView(mode) {
   if (allPoints.length) {
     mapState.map.fitBounds(allPoints, { padding: [28, 28] });
   }
+}
+
+function ensureCorrectionState() {
+  if (!(mapState.correctionOverlays instanceof Map)) {
+    mapState.correctionOverlays = new Map();
+  }
+
+  if (typeof mapState.correctionPending !== "boolean") {
+    mapState.correctionPending = false;
+  }
+}
+
+function correctionControls() {
+  return {
+    markButton: document.getElementById("markCorrectionButton"),
+    clearButton: document.getElementById("clearCorrectionButton"),
+    status: document.getElementById("correctionStatus"),
+    list: document.getElementById("correctionList")
+  };
+}
+
+function readCorrectionFlags() {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(window.localStorage.getItem(correctionFlagsKey) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function writeCorrectionFlags(flags) {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(correctionFlagsKey, JSON.stringify(flags));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function buildingSourcePoint(building) {
+  return normalizePoint(
+    building?.sourceLat ?? building?.baseLat,
+    building?.sourceLng ?? building?.baseLng
+  );
+}
+
+function hasSavedCorrection(building) {
+  const flags = readCorrectionFlags();
+  return Boolean(normalizeStoredPoint(flags?.[building?.name]?.lat, flags?.[building?.name]?.lng));
+}
+
+function updateCorrectionOverlay(building) {
+  ensureCorrectionState();
+  if (!mapState.map) {
+    return;
+  }
+
+  const corrected = hasSavedCorrection(building);
+  const point = buildingPoint(building);
+  const existing = mapState.correctionOverlays.get(building.name);
+
+  if (!corrected || !point) {
+    if (existing) {
+      mapState.map.removeLayer(existing);
+      mapState.correctionOverlays.delete(building.name);
+    }
+    return;
+  }
+
+  if (existing) {
+    existing.setLatLng([point.lat, point.lng]);
+    return;
+  }
+
+  const overlay = L.circleMarker([point.lat, point.lng], {
+    radius: 14,
+    color: "#c08a10",
+    weight: 2,
+    fillOpacity: 0,
+    dashArray: "4 4",
+    interactive: false
+  }).addTo(mapState.map);
+
+  mapState.correctionOverlays.set(building.name, overlay);
+}
+
+function syncCorrectionOverlays() {
+  ensureCorrectionState();
+  buildings.forEach((building) => updateCorrectionOverlay(building));
+}
+
+function setBuildingCoordinates(building, point) {
+  if (!building || !point) {
+    return;
+  }
+
+  building.lat = point.lat;
+  building.lng = point.lng;
+
+  const layer = mapState.layers.get(building.name);
+  if (layer) {
+    layer.setLatLng([point.lat, point.lng]);
+    layer.setPopupContent(popupMarkup(building));
+  }
+
+  updateCorrectionOverlay(building);
+}
+
+function renderCorrectionList() {
+  const { list } = correctionControls();
+  if (!list) {
+    return;
+  }
+
+  const flags = readCorrectionFlags();
+  const correctedBuildings = buildings.filter((building) =>
+    Boolean(normalizeStoredPoint(flags?.[building.name]?.lat, flags?.[building.name]?.lng))
+  );
+
+  if (!correctedBuildings.length) {
+    list.innerHTML = "";
+    list.classList.add("is-hidden");
+    return;
+  }
+
+  list.innerHTML = correctedBuildings
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((building) => {
+      const point = normalizeStoredPoint(flags?.[building.name]?.lat, flags?.[building.name]?.lng);
+      return `
+        <button class="correction-item" type="button" data-correction-name="${escapeHtml(building.name)}">
+          <p class="correction-item-title">${escapeHtml(building.name)}</p>
+          <div class="correction-item-meta">${escapeHtml(building.address)}</div>
+          <div class="correction-item-meta">Corrected to ${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}</div>
+        </button>
+      `;
+    }).join("");
+
+  list.classList.remove("is-hidden");
+  list.querySelectorAll("[data-correction-name]").forEach((button) => {
+    button.addEventListener("click", () => selectBuilding(button.dataset.correctionName, true));
+  });
+}
+
+function updateCorrectionUI() {
+  ensureCorrectionState();
+  const { markButton, clearButton, status } = correctionControls();
+  if (!markButton || !clearButton || !status) {
+    return;
+  }
+
+  const building = selectedBuilding();
+  const hasSelection = Boolean(building);
+  const corrected = hasSelection && hasSavedCorrection(building);
+
+  markButton.disabled = !hasSelection;
+  clearButton.disabled = !corrected;
+
+  if (mapState.correctionPending && building) {
+    status.textContent = `Click the map to place the corrected marker for ${building.name}.`;
+    return;
+  }
+
+  if (!building) {
+    status.textContent = "Select a landmark, then click Mark selected on map and click the correct spot on the map.";
+    return;
+  }
+
+  if (corrected) {
+    status.textContent = `${building.name} has a saved local correction.`;
+    return;
+  }
+
+  status.textContent = `Selected: ${building.name}. Click Mark selected on map to place a corrected marker.`;
+}
+
+function applyCorrectionForSelected(point) {
+  const building = selectedBuilding();
+  if (!building || !point) {
+    return;
+  }
+
+  const flags = readCorrectionFlags();
+  flags[building.name] = {
+    lat: point.lat,
+    lng: point.lng
+  };
+  writeCorrectionFlags(flags);
+  setBuildingCoordinates(building, point);
+
+  mapState.correctionPending = false;
+  renderDetails();
+  renderList();
+  syncMapState();
+  renderCorrectionList();
+  updateCorrectionUI();
+
+  if (mapState.currentLocation && selectedNavigationTarget()) {
+    clearRouteDetails();
+    drawNavigationGuide({ fitBounds: false });
+  }
+}
+
+function clearSelectedCorrection() {
+  const building = selectedBuilding();
+  if (!building) {
+    return;
+  }
+
+  const flags = readCorrectionFlags();
+  delete flags[building.name];
+  writeCorrectionFlags(flags);
+
+  const sourcePoint = buildingSourcePoint(building);
+  if (sourcePoint) {
+    setBuildingCoordinates(building, sourcePoint);
+  }
+
+  mapState.correctionPending = false;
+  renderDetails();
+  renderList();
+  syncMapState();
+  renderCorrectionList();
+  updateCorrectionUI();
+
+  if (mapState.currentLocation && selectedNavigationTarget()) {
+    clearRouteDetails();
+    drawNavigationGuide({ fitBounds: false });
+  }
+}
+
+function startCorrectionPlacement() {
+  ensureCorrectionState();
+  if (!selectedBuilding()) {
+    updateCorrectionUI();
+    return;
+  }
+
+  mapState.correctionPending = true;
+  updateCorrectionUI();
+}
+
+function attachCorrectionMapBehavior() {
+  ensureCorrectionState();
+  if (!mapState.map || mapState.correctionHandlerBound) {
+    return;
+  }
+
+  mapState.map.on("click", (event) => {
+    if (!mapState.correctionPending) {
+      return;
+    }
+
+    const point = normalizePoint(event.latlng?.lat, event.latlng?.lng);
+    if (!point) {
+      return;
+    }
+
+    applyCorrectionForSelected(point);
+  });
+
+  mapState.correctionHandlerBound = true;
+  syncCorrectionOverlays();
 }
 
 function localBuildingMatches(queryText, limit = 6, pool = buildings) {
@@ -492,7 +764,7 @@ async function handleBuildingSearch(event) {
     : await searchExternalBuilding(rawQuery).catch(() => null);
 
   if (!destination) {
-    buildingSearchStatus.textContent = `No destination match found for \"${rawQuery}\".`;
+    buildingSearchStatus.textContent = `No destination match found for "${rawQuery}".`;
     return;
   }
 
@@ -706,6 +978,8 @@ installAppButton.addEventListener("click", installApp);
 shareAppButton.addEventListener("click", shareApp);
 useLocationButton.addEventListener("click", requestCurrentLocation);
 navigateButton.addEventListener("click", fetchTurnByTurnRoute);
+document.getElementById("markCorrectionButton")?.addEventListener("click", startCorrectionPlacement);
+document.getElementById("clearCorrectionButton")?.addEventListener("click", clearSelectedCorrection);
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
@@ -721,14 +995,17 @@ window.addEventListener("appinstalled", () => {
 
 renderDetails();
 renderList();
+renderCorrectionList();
 setRouteMode("walking");
 updateNavigationUI();
+updateCorrectionUI();
 updateInstallButtonVisibility();
 updateQrPanel();
 registerServiceWorker();
 
 try {
   createMap();
+  attachCorrectionMapBehavior();
   setBasemap("street");
   fitView("campus");
   syncMapState();
