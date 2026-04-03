@@ -141,16 +141,8 @@ function hostedAppUrl() {
   return window.location.protocol === "file:" ? "" : window.location.href;
 }
 
-function cleanHostedAppUrl() {
-  const rawUrl = hostedAppUrl();
-  if (!rawUrl) {
-    return "";
-  }
-
-  const url = new URL(rawUrl);
-  url.hash = "";
-  url.search = "";
-  return url.toString();
+function installAppUrl() {
+  return "https://rmbgold-code.github.io/Howard-Parking-Map/";
 }
 
 function setAppActionStatus(message) {

@@ -540,17 +540,9 @@ function updateInstallButtonVisibility() {
 }
 
 function updateQrPanel() {
-  const url = cleanHostedAppUrl();
-  if (!url) {
-    appQrPanel.hidden = true;
-    setAppActionStatus("The QR code will appear automatically on the hosted version of this app.");
-    return;
-  }
-
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=0&data=${encodeURIComponent(url)}`;
+  const url = installAppUrl();
   appQrPanel.hidden = false;
   appQrLink.href = url;
-  appQrImage.src = qrUrl;
   setAppActionStatus("Scan the QR code to open the app on your phone.");
 }
 

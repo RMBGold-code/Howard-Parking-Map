@@ -1,4 +1,4 @@
-const CACHE_NAME = "howard-landmarks-v3";
+const CACHE_NAME = "howard-landmarks-v4";
 const APP_SHELL = [
   ".",
   "index.html",
@@ -7,7 +7,8 @@ const APP_SHELL = [
   "app-core.js",
   "app-ui.js",
   "manifest.json",
-  "icons/icon.svg"
+  "icons/icon.svg",
+  "icons/install-qr.svg"
 ];
 
 self.addEventListener("install", (event) => {
