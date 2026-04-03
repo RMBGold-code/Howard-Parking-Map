@@ -184,6 +184,9 @@
             <div class="detail-row"><strong>Navigation options</strong></div>
           </div>
         </div>
+        <div class="details-actions">
+          <button id="clearSelectionButton" class="map-jump detail-action" type="button" disabled>Clear selection</button>
+        </div>
 
         <div class="nav-card">
           <div class="nav-card-header">
@@ -247,5 +250,59 @@
   <script src="app-data.js"></script>
   <script src="app-core.js"></script>
   <script src="app-ui.js"></script>
+  <script>
+    (function () {
+      const clearSelectionButton = document.getElementById("clearSelectionButton");
+
+      if (!clearSelectionButton) {
+        return;
+      }
+
+      function syncClearSelectionButton() {
+        clearSelectionButton.disabled = !(selectedBuildingName || mapState.selectedParkingId);
+      }
+
+      function clearSelection() {
+        selectedBuildingName = "";
+        mapState.selectedParkingId = "";
+
+        if (mapState.map) {
+          mapState.map.closePopup();
+        }
+
+        clearNavigationGuide();
+        renderDetails();
+        renderList();
+        syncMapState();
+        syncParkingSelection();
+        updateNavigationUI();
+        syncClearSelectionButton();
+      }
+
+      const originalSelectBuilding = selectBuilding;
+      selectBuilding = function (...args) {
+        const result = originalSelectBuilding.apply(this, args);
+        syncClearSelectionButton();
+        return result;
+      };
+
+      const originalSelectParkingSpot = selectParkingSpot;
+      selectParkingSpot = function (...args) {
+        const result = originalSelectParkingSpot.apply(this, args);
+        syncClearSelectionButton();
+        return result;
+      };
+
+      const originalRenderDetails = renderDetails;
+      renderDetails = function (...args) {
+        const result = originalRenderDetails.apply(this, args);
+        syncClearSelectionButton();
+        return result;
+      };
+
+      clearSelectionButton.addEventListener("click", clearSelection);
+      syncClearSelectionButton();
+    }());
+  </script>
 </body>
 </html>
