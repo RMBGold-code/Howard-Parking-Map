@@ -9,6 +9,8 @@ const buildingSearchStatus = document.getElementById("buildingSearchStatus");
 const parkingResults = document.getElementById("parkingResults");
 const installAppButton = document.getElementById("installAppButton");
 const shareAppButton = document.getElementById("shareAppButton");
+const appUpdatePanel = document.getElementById("appUpdatePanel");
+const refreshAppButton = document.getElementById("refreshAppButton");
 const appQrPanel = document.getElementById("appQrPanel");
 const appQrLink = document.getElementById("appQrLink");
 const appQrImage = document.getElementById("appQrImage");
@@ -55,6 +57,9 @@ let activeDestinationSuggestionIndex = -1;
 let directorySuggestions = [];
 let activeDirectorySuggestionIndex = -1;
 let deferredInstallPrompt = null;
+let serviceWorkerRegistration = null;
+let appUpdateReady = false;
+let appUpdateRefreshPending = false;
 
 function toRadians(value) {
   return (value * Math.PI) / 180;
@@ -355,7 +360,7 @@ function renderParkingResults(destination, parkingSpots) {
   parkingResults.innerHTML = topSpots.map((spot) => `
     <button class="parking-card" type="button" data-parking-id="${escapeHtml(spot.id)}">
       <p class="parking-card-title">${escapeHtml(spot.name)}</p>
-      <div class="parking-card-meta">${escapeHtml(spot.typeLabel)} • ${formatDistanceMiles(spot.distanceMeters)} from ${escapeHtml(destination.name)}</div>
+      <div class="parking-card-meta">${escapeHtml(spot.typeLabel)} â€¢ ${formatDistanceMiles(spot.distanceMeters)} from ${escapeHtml(destination.name)}</div>
       <div class="parking-card-meta">${escapeHtml(spot.address)}</div>
       <div class="parking-card-meta">Click to navigate to this parking option</div>
     </button>
@@ -433,14 +438,14 @@ function clearNavigationGuide() {
 
 function renderRouteDetails(route) {
   const durationMinutes = route.duration / 60;
-  routeSummary.textContent = `${routeModeLabel(mapState.routeMode)} route: ${formatDistanceMiles(route.distance)} • about ${formatDuration(durationMinutes)}`;
+  routeSummary.textContent = `${routeModeLabel(mapState.routeMode)} route: ${formatDistanceMiles(route.distance)} â€¢ about ${formatDuration(durationMinutes)}`;
   routeSummary.classList.remove("is-hidden");
 
   const steps = route.legs.flatMap((leg) => leg.steps || []).filter((step) => step.distance > 0 || (step.maneuver && step.maneuver.type === "arrive"));
   routeSteps.innerHTML = steps.map((step, index) => `
     <div class="route-step">
       <p class="route-step-title">${index + 1}. ${stepInstruction(step)}</p>
-      <div class="route-step-meta">${formatDistanceMiles(step.distance)} • about ${formatDuration(step.duration / 60)}</div>
+      <div class="route-step-meta">${formatDistanceMiles(step.distance)} â€¢ about ${formatDuration(step.duration / 60)}</div>
     </div>
   `).join("");
   routeSteps.classList.toggle("is-hidden", steps.length === 0);
