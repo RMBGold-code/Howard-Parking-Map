@@ -581,14 +581,6 @@ body {
   border: 1px solid rgba(19, 63, 120, 0.12);
 }
 
-.correction-card {
-  margin-top: 18px;
-  padding: 18px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(214, 231, 255, 0.9), rgba(236, 244, 255, 0.96));
-  border: 1px solid rgba(19, 63, 120, 0.12);
-}
-
 .nav-card-header {
   margin-bottom: 14px;
 }
@@ -610,12 +602,6 @@ body {
 }
 
 .nav-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.correction-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
@@ -688,64 +674,6 @@ body {
   margin-top: 4px;
   color: #5a6b87;
   font-size: 0.88rem;
-}
-
-.correction-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.correction-list.is-hidden {
-  display: none;
-}
-
-.correction-item {
-  width: 100%;
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(19, 63, 120, 0.12);
-  cursor: pointer;
-  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
-}
-
-.correction-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 18px rgba(16, 35, 30, 0.08);
-  border-color: rgba(19, 63, 120, 0.22);
-}
-
-.correction-item-title {
-  margin: 0;
-  color: #173556;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.correction-item-meta {
-  margin-top: 4px;
-  color: #5a6b87;
-  font-size: 0.88rem;
-  line-height: 1.45;
-}
-
-.correction-export {
-  width: 100%;
-  min-height: 132px;
-  margin-top: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(15, 47, 94, 0.18);
-  background: rgba(255, 255, 255, 0.84);
-  color: #173556;
-  font: 600 0.82rem/1.45 Consolas, "Courier New", monospace;
-  resize: vertical;
-}
-
-.correction-export.is-hidden {
-  display: none;
 }
 
 .lot-type {
@@ -985,10 +913,6 @@ a {
   }
 
   .nav-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .correction-actions {
     grid-template-columns: 1fr;
   }
 
