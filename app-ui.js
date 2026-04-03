@@ -535,8 +535,52 @@ function isInstalledApp() {
     || document.referrer.startsWith("android-app://");
 }
 
+function deviceProfile() {
+  const ua = navigator.userAgent || "";
+  const touchMac = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  const isiPhone = /iPhone/i.test(ua);
+  const isiPad = /iPad/i.test(ua) || touchMac;
+  const isIOS = isiPhone || isiPad;
+  const isMac = /Macintosh|Mac OS X/i.test(ua) && !isIOS;
+  const isAndroid = /Android/i.test(ua);
+  const isSafari = /Safari/i.test(ua) && !/Chrome|CriOS|Edg|OPR|Firefox/i.test(ua);
+  const isChromium = /Chrome|CriOS|Edg/i.test(ua);
+
+  return {
+    isiPhone,
+    isiPad,
+    isIOS,
+    isMac,
+    isAndroid,
+    isSafari,
+    isChromium
+  };
+}
+
+function installShortcutHelpText() {
+  const profile = deviceProfile();
+
+  if (profile.isiPhone || profile.isiPad) {
+    return "On iPhone or iPad in Safari, tap Share, then Add to Home Screen.";
+  }
+
+  if (profile.isMac && profile.isSafari) {
+    return "On Safari for Mac, open File, then choose Add to Dock.";
+  }
+
+  if (profile.isChromium) {
+    return "If the browser does not prompt automatically, open the browser menu and choose Install app or Create shortcut.";
+  }
+
+  if (profile.isAndroid) {
+    return "On Android, open the browser menu and choose Install app or Add to Home screen.";
+  }
+
+  return "Open this page in Safari, Chrome, or Edge and use Add to Home Screen, Add to Dock, or your browser's install shortcut option.";
+}
+
 function updateInstallButtonVisibility() {
-  installAppButton.hidden = !isInstalledApp();
+  installAppButton.hidden = isInstalledApp() || !hostedAppUrl();
 }
 
 function updateAppUpdateUI() {
@@ -590,8 +634,13 @@ async function installApp() {
     return;
   }
 
+  if (!hostedAppUrl()) {
+    setAppActionStatus("Install shortcuts work from the hosted app link, not from a local file.");
+    return;
+  }
+
   if (!deferredInstallPrompt) {
-    setAppActionStatus("Use Share app or the QR code to open the hosted app.");
+    setAppActionStatus(installShortcutHelpText());
     return;
   }
 
