@@ -29,8 +29,8 @@ const buildings = [
     typeLabel: "Health sciences",
     address: "520 W St. NW, Washington, DC 20059",
     note: "Howard medical school building in the health sciences cluster.",
-    lat: 38.9191,
-    lng: -77.01618
+    lat: 38.91894469581768,
+    lng: -77.02006959918438
   },
   {
     name: "Louis Stokes Health Sciences Library",
@@ -62,8 +62,8 @@ const buildings = [
     typeLabel: "Library / admin",
     address: "2400 6th St. NW, Washington, DC 20059",
     note: "Starting point of Howard's official self-guided tour booklet.",
-    lat: 38.91992,
-    lng: -77.01856
+    lat: 38.92320341913206,
+    lng: -77.02158236506875
   },
   {
     name: "School of Business",
@@ -73,8 +73,8 @@ const buildings = [
     typeLabel: "Academic",
     address: "2600 6th St. NW, Washington, DC 20059",
     note: "Highlighted on Howard's self-guided tour as a major academic stop.",
-    lat: 38.92113,
-    lng: -77.01844
+    lat: 38.92429863014729,
+    lng: -77.02161884308681
   },
   {
     name: "Founders Library",
@@ -95,8 +95,8 @@ const buildings = [
     typeLabel: "Student life",
     address: "2397 6th St. NW, Washington, DC 20059",
     note: "Student center with dining, events, and campus gathering spaces.",
-    lat: 38.92022,
-    lng: -77.01806
+    lat: 38.92389238396037,
+    lng: -77.01916408540457
   },
   {
     name: "Alain Locke Hall",
@@ -106,8 +106,8 @@ const buildings = [
     typeLabel: "Academic",
     address: "2453 6th St. NW, Washington, DC 20059",
     note: "Home to parts of the College of Arts and Sciences.",
-    lat: 38.92056,
-    lng: -77.01752
+    lat: 38.92344666173087,
+    lng: -77.01930356027334
   },
   {
     name: "School of Education",
@@ -117,8 +117,8 @@ const buildings = [
     typeLabel: "Academic",
     address: "2441 4th St. NW, Washington, DC 20059",
     note: "Academic stop identified in Howard's self-guided tour booklet.",
-    lat: 38.91988,
-    lng: -77.01692
+    lat: 38.9232463361984,
+    lng: -77.0186651945278
   },
   {
     name: "Frederick Douglass Memorial Hall",
@@ -128,8 +128,8 @@ const buildings = [
     typeLabel: "Academic",
     address: "2441 6th St. NW, Washington, DC 20059",
     note: "Classroom building for departments in Arts and Sciences.",
-    lat: 38.9203,
-    lng: -77.01678
+    lat: 38.923742140807924,
+    lng: -77.02085924150198
   },
   {
     name: "Lulu Vere Childers Hall",
@@ -139,8 +139,8 @@ const buildings = [
     typeLabel: "Arts",
     address: "2455 6th St. NW, Washington, DC 20059",
     note: "Home of Howard's fine arts division.",
-    lat: 38.92162,
-    lng: -77.01712
+    lat: 38.92432474861593,
+    lng: -77.0199794769451
   },
   {
     name: "Ira Aldridge Theater",
@@ -150,8 +150,8 @@ const buildings = [
     typeLabel: "Arts",
     address: "2455 6th St. NW, Washington, DC 20059",
     note: "Student performance venue named in the self-guided tour.",
-    lat: 38.92108,
-    lng: -77.01694
+    lat: 38.92420170307651,
+    lng: -77.02099227908549
   },
   {
     name: "Cramton Auditorium",
@@ -161,8 +161,8 @@ const buildings = [
     typeLabel: "Arts",
     address: "2455 6th St. NW, Washington, DC 20059",
     note: "Large-event venue used for convocations, concerts, and pageants.",
-    lat: 38.92184,
-    lng: -77.01684
+    lat: 38.924529244482585,
+    lng: -77.02081632615774
   },
   {
     name: "Greene Stadium",
@@ -172,8 +172,8 @@ const buildings = [
     typeLabel: "Athletics",
     address: "2400 6th St. NW, Washington, DC 20059",
     note: "Howard Athletics lists Greene Stadium at 2400 6th Street NW, just west of the McMillan Reservoir edge.",
-    lat: 38.92559,
-    lng: -77.02079
+    lat: 38.925398623557456,
+    lng: -77.02074551585612
   },
   {
     name: "Burr Gymnasium",
@@ -183,8 +183,8 @@ const buildings = [
     typeLabel: "Athletics",
     address: "2801 Georgia Ave. NW, Washington, DC 20001",
     note: "Basketball, volleyball, and swimming venue on the north side of campus.",
-    lat: 38.92361,
-    lng: -77.01817
+    lat: 38.92657883081299,
+    lng: -77.02193641665872
   },
   {
     name: "Cook Hall",
@@ -194,8 +194,8 @@ const buildings = [
     typeLabel: "Student life",
     address: "2601 6th St. NW, Washington, DC 20059",
     note: "Residence hall called out on Howard's self-guided tour route.",
-    lat: 38.92328,
-    lng: -77.0189
+    lat: 38.92513772054691,
+    lng: -77.02171754838675
   },
   {
     name: "Drew Hall",
@@ -205,8 +205,8 @@ const buildings = [
     typeLabel: "Student life",
     address: "511 Gresham Pl. NW, Washington, DC 20059",
     note: "Howard housing places Drew Hall on Gresham Place, north of Greene Stadium and west of the reservoir.",
-    lat: 38.92648,
-    lng: -77.01946
+    lat: 38.927299479400276,
+    lng: -77.02092897893635
   },
   {
     name: "Just Hall",
@@ -216,8 +216,8 @@ const buildings = [
     typeLabel: "Academic",
     address: "500 College St. NW, Washington, DC 20059",
     note: "Science building on the east side of main campus.",
-    lat: 38.91838,
-    lng: -77.01648
+    lat: 38.92105322144835,
+    lng: -77.01946878436502
   },
   {
     name: "Mackey Building",
@@ -227,8 +227,8 @@ const buildings = [
     typeLabel: "Academic",
     address: "2366 6th St. NW, Washington, DC 20059",
     note: "Architecture-related academic building near the south side of main campus.",
-    lat: 38.91862,
-    lng: -77.0186
+    lat: 38.92206989912793,
+    lng: -77.02159309390481
   },
   {
     name: "Howard Center",
@@ -238,8 +238,8 @@ const buildings = [
     typeLabel: "Student life",
     address: "2225 Georgia Ave. NW, Washington, DC 20059",
     note: "Retail and student-facing campus edge building.",
-    lat: 38.91843,
-    lng: -77.02124
+    lat: 38.924448280908884,
+    lng: -77.02183020116537
   },
   {
     name: "Ben's Chili Bowl",
@@ -249,8 +249,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "1213 U St. NW, Washington, DC 20009",
     note: "Historic D.C. restaurant on U Street, within about 2 miles of Howard.",
-    lat: 38.91702,
-    lng: -77.02818
+    lat: 38.91678308236555,
+    lng: -77.02833804488593
   },
   {
     name: "Busboys and Poets 14th & V",
@@ -260,8 +260,8 @@ const buildings = [
     typeLabel: "Brunch",
     address: "2021 14th St. NW, Washington, DC 20009",
     note: "Cafe-bookstore and events venue with all-day brunch-friendly service south of Howard.",
-    lat: 38.91752,
-    lng: -77.03174
+    lat: 38.91787573170199,
+    lng: -77.03138959409443
   },
   {
     name: "Le Diplomate",
@@ -282,8 +282,8 @@ const buildings = [
     typeLabel: "Brunch",
     address: "1100 Florida Ave. NW, Washington, DC 20009",
     note: "Historic D.C. brunch and breakfast stop with all-day breakfast.",
-    lat: 38.92086,
-    lng: -77.02792
+    lat: 38.92058278749957,
+    lng: -77.02734482289999
   },
   {
     name: "Ted's Bulletin 14th Street",
@@ -293,8 +293,8 @@ const buildings = [
     typeLabel: "Brunch",
     address: "1818 14th St. NW, Washington, DC 20009",
     note: "All-day breakfast and weekend brunch spot on 14th Street.",
-    lat: 38.91429,
-    lng: -77.03167
+    lat: 38.914464844585574,
+    lng: -77.03229618074147
   },
   {
     name: "The Red Hen",
@@ -304,8 +304,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "1822 1st St. NW, Washington, DC 20001",
     note: "Italian-influenced neighborhood restaurant east of Howard.",
-    lat: 38.91405,
-    lng: -77.00895
+    lat: 38.91501580661844,
+    lng: -77.01236200334279
   },
   {
     name: "Rooster & Owl",
@@ -315,8 +315,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "2436 14th St. NW, Washington, DC 20009",
     note: "Contemporary restaurant north of U Street.",
-    lat: 38.92259,
-    lng: -77.0318
+    lat: 38.921469257010756,
+    lng: -77.03207623960225
   },
   {
     name: "Maydan",
@@ -326,8 +326,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "1346 Florida Ave. NW, Washington, DC 20009",
     note: "Middle Eastern restaurant southwest of Howard.",
-    lat: 38.91933,
-    lng: -77.03146
+    lat: 38.91989664246901,
+    lng: -77.0308048725292
   },
   {
     name: "Thip Khao",
@@ -337,8 +337,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "3462 14th St. NW, Washington, DC 20010",
     note: "Lao restaurant north of Howard that still sits comfortably inside the 20-mile map radius.",
-    lat: 38.93422,
-    lng: -77.03214
+    lat: 38.93302705672601,
+    lng: -77.03301930430825
   },
   {
     name: "Founding Farmers DC",
@@ -359,8 +359,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "633 D St. NW, Washington, DC 20004",
     note: "Modern Indian restaurant in Penn Quarter with both lunch and dinner service.",
-    lat: 38.89477,
-    lng: -77.02167
+    lat: 38.8949020863359,
+    lng: -77.02130985261648
   },
   {
     name: "Zaytinya",
@@ -392,8 +392,8 @@ const buildings = [
     typeLabel: "Brunch",
     address: "1207 9th St. NW, Washington, DC 20001",
     note: "Modern comfort-food spot with all-day brunch service near Mount Vernon Square.",
-    lat: 38.90536,
-    lng: -77.0252
+    lat: 38.905645530757866,
+    lng: -77.02348780633658
   },
   {
     name: "St. Anselm DC",
@@ -414,8 +414,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "1346 4th St. SE, Washington, DC 20003",
     note: "Navy Yard destination for Palestinian-inspired dining.",
-    lat: 38.87661,
-    lng: -77.0009
+    lat: 38.87448914296022,
+    lng: -77.00000667575297
   },
   {
     name: "Clyde's of Georgetown",
@@ -425,8 +425,8 @@ const buildings = [
     typeLabel: "Brunch",
     address: "3236 M St. NW, Washington, DC 20007",
     note: "Long-running Georgetown staple serving lunch, dinner, and brunch.",
-    lat: 38.90565,
-    lng: -77.06363
+    lat: 38.90491248656831,
+    lng: -77.0637638569042
   },
   {
     name: "bartaco The Wharf",
@@ -436,8 +436,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "645 Wharf St. SW, Washington, DC 20024",
     note: "Wharf waterfront taco spot with late-night service.",
-    lat: 38.87897,
-    lng: -77.02486
+    lat: 38.87717864282808,
+    lng: -77.02196860316691
   },
   {
     name: "Silver Diner Navy Yard",
@@ -447,8 +447,8 @@ const buildings = [
     typeLabel: "Brunch",
     address: "1250 Half St. SE, Washington, DC 20003",
     note: "All-day breakfast and diner menu across from Nationals Park.",
-    lat: 38.87362,
-    lng: -77.00769
+    lat: 38.875171898520755,
+    lng: -77.00686347486227
   },
   {
     name: "Ada's on the River",
@@ -458,8 +458,8 @@ const buildings = [
     typeLabel: "Brunch",
     address: "3 Pioneer Mill Way, Alexandria, VA 22314",
     note: "Old Town Alexandria waterfront restaurant known for its brunch and river views.",
-    lat: 38.80153,
-    lng: -77.04099
+    lat: 38.80163051613979,
+    lng: -77.03976345063894
   },
   {
     name: "Ambar Clarendon",
@@ -469,8 +469,8 @@ const buildings = [
     typeLabel: "Brunch",
     address: "2901 Wilson Blvd., Arlington, VA 22201",
     note: "Clarendon Balkan restaurant known for its brunch and unlimited tasting format.",
-    lat: 38.88666,
-    lng: -77.09334
+    lat: 38.888710598778566,
+    lng: -77.09357285502848
   },
   {
     name: "miXt Food Hall",
@@ -480,8 +480,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "3809 Rhode Island Ave., Brentwood, MD 20722",
     note: "Brentwood food hall and casual eatery hub in Prince George's County.",
-    lat: 38.9384,
-    lng: -76.95262
+    lat: 38.93903859928562,
+    lng: -76.9551075697109
   },
   {
     name: "District Winery",
@@ -491,8 +491,8 @@ const buildings = [
     typeLabel: "Winery",
     address: "385 Water St. SE, Washington, DC 20003",
     note: "Waterfront winery, tasting room, and private-event venue in Navy Yard.",
-    lat: 38.87686,
-    lng: -76.96713
+    lat: 38.87349886072587,
+    lng: -77.00071585180012
   },
   {
     name: "Howard Theatre",
@@ -502,8 +502,8 @@ const buildings = [
     typeLabel: "Event venue",
     address: "620 T St. NW, Washington, DC 20001",
     note: "Historic Shaw performance venue a short trip south of Howard's campus.",
-    lat: 38.91589,
-    lng: -77.02155
+    lat: 38.91533636432745,
+    lng: -77.0210630893871
   },
   {
     name: "9:30 Club",
@@ -513,8 +513,8 @@ const buildings = [
     typeLabel: "Event venue",
     address: "815 V St. NW, Washington, DC 20001",
     note: "Major concert venue on the U Street corridor.",
-    lat: 38.91854,
-    lng: -77.02439
+    lat: 38.91809281958938,
+    lng: -77.02369353944408
   },
   {
     name: "Lincoln Theatre",
@@ -524,8 +524,8 @@ const buildings = [
     typeLabel: "Event venue",
     address: "1215 U St. NW, Washington, DC 20009",
     note: "Historic U Street theater for comedy, music, and touring events.",
-    lat: 38.91686,
-    lng: -77.02838
+    lat: 38.917349591208676,
+    lng: -77.0289466381155
   },
   {
     name: "Walter E. Washington Convention Center",
@@ -579,8 +579,8 @@ const buildings = [
     typeLabel: "Event venue",
     address: "101 MGM National Ave., Oxon Hill, MD 20745",
     note: "Regional entertainment destination with theater, dining, and nightlife.",
-    lat: 38.7931,
-    lng: -77.01809
+    lat: 38.795157609819874,
+    lng: -77.00879144675129
   },
   {
     name: "The Fillmore Silver Spring",
@@ -590,8 +590,8 @@ const buildings = [
     typeLabel: "Event venue",
     address: "8656 Colesville Rd., Silver Spring, MD 20910",
     note: "Popular regional concert venue north of D.C. within the 20-mile map radius.",
-    lat: 38.99655,
-    lng: -77.02714
+    lat: 38.99748241977213,
+    lng: -77.02758085729329
   }
 ];
 
