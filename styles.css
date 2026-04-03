@@ -268,6 +268,17 @@ body {
   font-size: 1.45rem;
 }
 
+.list-header > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.list-header h3 {
+  font-size: 1.36rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .legend-list {
   display: grid;
   gap: 10px;
@@ -322,7 +333,7 @@ body {
 
 .directory-search-wrap {
   position: relative;
-  width: min(260px, 100%);
+  width: min(340px, 100%);
 }
 
 .map-jump {
@@ -724,7 +735,7 @@ body {
 }
 
 .search-box {
-  width: min(260px, 100%);
+  width: 100%;
   padding: 11px 14px;
   border: 1px solid rgba(16, 59, 77, 0.14);
   border-radius: 12px;
@@ -924,6 +935,10 @@ a {
   .building-finder {
     align-items: start;
     flex-direction: column;
+  }
+
+  .list-header h3 {
+    white-space: normal;
   }
 
   .search-box {
