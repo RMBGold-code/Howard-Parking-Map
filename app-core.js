@@ -1,6 +1,6 @@
 const buildingList = document.getElementById("lotList");
 const buildingDetails = document.getElementById("lotDetails");
-const mapCard = document.querySelector(".map-card");
+const mapCanvas = document.getElementById("map");
 const listSearchBox = document.getElementById("searchBox");
 const listSuggestions = document.getElementById("listSuggestions");
 const buildingFinder = document.getElementById("buildingFinder");
@@ -63,16 +63,16 @@ let deferredInstallPrompt = null;
 let serviceWorkerRegistration = null;
 
 function snapViewportToMap() {
-  if (!mapCard) {
+  if (!mapCanvas) {
     return;
   }
 
   const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
   window.setTimeout(() => {
-    const rect = mapCard.getBoundingClientRect();
+    const rect = mapCanvas.getBoundingClientRect();
     const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-    const absoluteTop = window.scrollY + rect.top;
-    const centeredTop = absoluteTop - Math.max((viewportHeight - rect.height) / 2, 24);
+    const absoluteCenter = window.scrollY + rect.top + (rect.height / 2);
+    const centeredTop = absoluteCenter - (viewportHeight / 2);
     window.scrollTo({
       top: Math.max(0, centeredTop),
       behavior
