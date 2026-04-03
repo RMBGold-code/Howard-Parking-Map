@@ -1,4 +1,4 @@
-function selectBuilding(name, moveMap = false) {
+function selectBuilding(name, moveMap = false, snapToMap = false) {
   selectedBuildingName = name;
   mapState.selectedParkingId = "";
   const building = selectedBuilding();
@@ -17,6 +17,10 @@ function selectBuilding(name, moveMap = false) {
     if (building) {
       focusBuildingOnMap(building);
     }
+  }
+
+  if (snapToMap) {
+    snapViewportToMap();
   }
 }
 
@@ -327,7 +331,7 @@ function commitListSuggestion(index) {
   listSearchBox.value = building.name;
   listQuery = building.name.trim().toLowerCase();
   hideListSuggestions();
-  selectBuilding(building.name, true);
+  selectBuilding(building.name, true, true);
 }
 
 function showSearchMarker(result) {
@@ -497,7 +501,7 @@ async function handleBuildingSearch(event) {
   }
 
   if (localMatch) {
-    selectBuilding(localMatch.name, true);
+    selectBuilding(localMatch.name, true, true);
   } else {
     selectedBuildingName = "";
     renderDetails();

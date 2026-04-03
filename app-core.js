@@ -1,5 +1,6 @@
 const buildingList = document.getElementById("lotList");
 const buildingDetails = document.getElementById("lotDetails");
+const mapCard = document.querySelector(".map-card");
 const listSearchBox = document.getElementById("searchBox");
 const listSuggestions = document.getElementById("listSuggestions");
 const buildingFinder = document.getElementById("buildingFinder");
@@ -60,6 +61,17 @@ let directorySuggestions = [];
 let activeDirectorySuggestionIndex = -1;
 let deferredInstallPrompt = null;
 let serviceWorkerRegistration = null;
+
+function snapViewportToMap() {
+  if (!mapCard) {
+    return;
+  }
+
+  const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  window.setTimeout(() => {
+    mapCard.scrollIntoView({ behavior, block: "start" });
+  }, 120);
+}
 
 function toRadians(value) {
   return (value * Math.PI) / 180;
@@ -329,7 +341,7 @@ function syncParkingSelection() {
   });
 }
 
-function selectParkingSpot(id, moveMap = false) {
+function selectParkingSpot(id, moveMap = false, snapToMap = false) {
   mapState.selectedParkingId = id;
   clearRouteDetails();
   syncParkingSelection();
@@ -346,6 +358,10 @@ function selectParkingSpot(id, moveMap = false) {
     });
     const entry = mapState.parkingMarkers.find((markerEntry) => markerEntry.id === id);
     entry?.marker.openPopup();
+  }
+
+  if (snapToMap) {
+    snapViewportToMap();
   }
 }
 
@@ -368,7 +384,7 @@ function renderParkingResults(destination, parkingSpots) {
   parkingResults.classList.remove("is-hidden");
 
   parkingResults.querySelectorAll("[data-parking-id]").forEach((button) => {
-    button.addEventListener("click", () => selectParkingSpot(button.dataset.parkingId, true));
+    button.addEventListener("click", () => selectParkingSpot(button.dataset.parkingId, true, true));
   });
 
   syncParkingSelection();
@@ -398,7 +414,7 @@ function showParkingMarkers(destination, parkingSpots) {
         <p class="popup-meta">${escapeHtml(spot.typeLabel)}<br>${escapeHtml(spot.address)}<br>${formatDistanceMiles(spot.distanceMeters)} from ${escapeHtml(destination.name)}</p>
       </div>
     `);
-    marker.on("click", () => selectParkingSpot(spot.id, false));
+    marker.on("click", () => selectParkingSpot(spot.id, false, false));
 
     return { id: spot.id, marker };
   });
@@ -812,7 +828,7 @@ function createMap() {
       className: "lot-label"
     });
     layer.bindPopup(popupMarkup(building));
-    layer.on("click", () => selectBuilding(building.name, true));
+    layer.on("click", () => selectBuilding(building.name, true, false));
     mapState.layers.set(building.name, layer);
   });
 
@@ -879,7 +895,7 @@ function renderList() {
   }).join("");
 
   buildingList.querySelectorAll(".lot-button").forEach((button) => {
-    button.addEventListener("click", () => selectBuilding(button.dataset.name, true));
+    button.addEventListener("click", () => selectBuilding(button.dataset.name, true, true));
   });
 }
 
