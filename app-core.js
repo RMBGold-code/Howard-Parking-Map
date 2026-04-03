@@ -859,7 +859,13 @@ function renderDetails() {
   if (!building) {
     buildingDetails.innerHTML = `
       <h2>Pick a landmark</h2>
-      <p>Choose a campus or regional landmark on the map or from the list below to view its address, category, and notes.</p>
+      <p>Tap any landmark on the map or in the directory to view:</p>
+      <div class="detail-grid">
+        <div class="detail-row"><strong>Address</strong></div>
+        <div class="detail-row"><strong>Category</strong></div>
+        <div class="detail-row"><strong>Notes</strong></div>
+        <div class="detail-row"><strong>Navigation options</strong></div>
+      </div>
     `;
     return;
   }
