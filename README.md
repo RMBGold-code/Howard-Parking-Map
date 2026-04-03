@@ -1,43 +1,52 @@
-# Howard University Landmarks App
+# Howard+DC landmarks
 
-This project is now set up as a shareable installable web app.
+A single-page interactive map focused on Howard University and the nearby Washington, D.C. area. The app highlights academic buildings, student life, arts, athletics, health sciences, and selected regional restaurants, brunch spots, wineries, and event venues.
 
-## What was added
+## Features
 
-- `manifest.json` for installability
-- `sw.js` service worker for app-shell caching
-- local app icons in [`icons`](C:/Users/ckell/OneDrive/Documents/Map/icons)
-- install/share buttons in the welcome panel
+- real basemap with aerial and street views
+- color-coded landmark categories
+- searchable directory with live suggestion dropdowns
+- parking finder for any typed destination
+- clickable nearby parking options
+- in-app walking or driving navigation from your location
+- installable PWA shell with share and QR access
 
-## How to share it
+## Files
 
-Because browsers only allow full app install behavior from hosted URLs, the best next step is to publish this folder to a static host.
+- `index.html`: page structure and controls
+- `styles.css`: layout, colors, cards, and responsive styling
+- `app-data.js`: landmark dataset and category metadata
+- `app-core.js`: shared DOM references, state, map creation, and rendering helpers
+- `app-ui.js`: UI events, search flows, parking lookup, navigation, and install/share behavior
+- `manifest.json`: PWA metadata
+- `sw.js`: service worker for local app shell caching
+- `icons/`: app icon and QR asset
 
-Good options:
+## Local use
 
-1. GitHub Pages
-2. Netlify
-3. Vercel
-4. OneDrive or SharePoint static hosting if available in your environment
+Open `index.html` in a browser for the local version. Some features need internet access:
 
-## Quickest path with GitHub Pages
+- map tiles
+- search fallback
+- parking lookup
+- route generation
 
-1. Create a new GitHub repository.
-2. Upload the files from this folder.
-3. In the repository settings, open `Pages`.
-4. Set the source to the main branch root.
-5. Save and wait for GitHub to publish the site.
+## Share it
 
-Once it is live on `https://...`, users can:
+The live hosted app is:
 
-- open the link in their browser
-- use the `Share app` button
-- install it with the `Install app` button when supported
+[Howard+DC landmarks](https://rmbgold-code.github.io/Howard-Parking-Map/)
 
-## Local testing note
+To share it with other people:
 
-If you open `index.html` directly as a local file, the app still works, but:
+- send them the hosted URL above
+- let them scan the QR code on the page
+- install it with the `Install shortcut` button when supported
 
-- service worker install features will not fully activate
-- the share button cannot produce a useful public URL
-- install prompts will usually stay unavailable
+## Notes
+
+- Howard campus coordinates are curated in source data
+- off-campus places use source coordinates baked into the app data
+- routing depends on live network access
+- parking results depend on live OpenStreetMap data availability
