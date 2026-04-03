@@ -81,7 +81,7 @@ body {
 .hero-brand-row {
   display: flex;
   justify-content: flex-start;
-  margin: 26px 0 18px -25px;
+  margin: 26px 0 18px -12px;
 }
 
 .hero-logo-shell {

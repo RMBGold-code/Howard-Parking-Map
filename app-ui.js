@@ -529,8 +529,14 @@ async function handleBuildingSearch(event) {
   }
 }
 
+function isInstalledApp() {
+  return window.matchMedia("(display-mode: standalone)").matches
+    || window.navigator.standalone === true
+    || document.referrer.startsWith("android-app://");
+}
+
 function updateInstallButtonVisibility() {
-  installAppButton.hidden = !deferredInstallPrompt;
+  installAppButton.hidden = isInstalledApp() || !deferredInstallPrompt;
 }
 
 async function installApp() {
