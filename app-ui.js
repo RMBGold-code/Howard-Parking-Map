@@ -595,49 +595,11 @@ function updateInstallButtonVisibility() {
   installAppButton.hidden = isInstalledApp() || !hostedAppUrl();
 }
 
-function updateAppUpdateUI() {
-  appUpdatePanel.hidden = !appUpdateReady;
-}
-
 function updateQrPanel() {
   const url = installAppUrl();
   appQrPanel.hidden = false;
   appQrLink.href = url;
   setAppActionStatus("Scan the QR code to open the app on your phone.");
-}
-
-function markAppUpdateReady(registration = serviceWorkerRegistration) {
-  if (!registration?.waiting) {
-    return;
-  }
-
-  serviceWorkerRegistration = registration;
-  appUpdateReady = true;
-  updateAppUpdateUI();
-  setAppActionStatus("A newer version is ready. Select Update app to refresh.");
-}
-
-function watchServiceWorkerInstallation(worker, registration) {
-  if (!worker) {
-    return;
-  }
-
-  worker.addEventListener("statechange", () => {
-    if (worker.state === "installed" && navigator.serviceWorker.controller) {
-      markAppUpdateReady(registration);
-    }
-  });
-}
-
-function refreshAppToLatest() {
-  if (!serviceWorkerRegistration?.waiting) {
-    setAppActionStatus("No update is ready yet.");
-    return;
-  }
-
-  appUpdateRefreshPending = true;
-  setAppActionStatus("Updating app...");
-  serviceWorkerRegistration.waiting.postMessage({ type: "SKIP_WAITING" });
 }
 
 async function installApp() {
@@ -710,27 +672,6 @@ function registerServiceWorker() {
     navigator.serviceWorker.register("./sw.js")
       .then((registration) => {
         serviceWorkerRegistration = registration;
-
-        if (registration.waiting) {
-          markAppUpdateReady(registration);
-        }
-
-        if (registration.installing) {
-          watchServiceWorkerInstallation(registration.installing, registration);
-        }
-
-        registration.addEventListener("updatefound", () => {
-          watchServiceWorkerInstallation(registration.installing, registration);
-        });
-
-        navigator.serviceWorker.addEventListener("controllerchange", () => {
-          if (!appUpdateRefreshPending) {
-            return;
-          }
-
-          appUpdateRefreshPending = false;
-          window.location.reload();
-        });
 
         const checkForAppUpdate = () => {
           registration.update().catch(() => {
@@ -841,7 +782,6 @@ buildingSearchBox.addEventListener("keydown", (event) => {
 buildingFinder.addEventListener("submit", handleBuildingSearch);
 installAppButton.addEventListener("click", installApp);
 shareAppButton.addEventListener("click", shareApp);
-refreshAppButton.addEventListener("click", refreshAppToLatest);
 useLocationButton.addEventListener("click", requestCurrentLocation);
 navigateButton.addEventListener("click", fetchTurnByTurnRoute);
 
@@ -862,7 +802,6 @@ renderList();
 setRouteMode("walking");
 updateNavigationUI();
 updateInstallButtonVisibility();
-updateAppUpdateUI();
 updateQrPanel();
 registerServiceWorker();
 
