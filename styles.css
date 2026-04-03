@@ -838,15 +838,41 @@ body {
   border-color: var(--category-color, rgba(16, 35, 30, 0.55));
   background:
     linear-gradient(90deg, var(--category-color, transparent) 0 6px, transparent 6px),
-    linear-gradient(180deg, var(--category-tint, rgba(255,255,255,0.44)), rgba(255, 255, 255, 0.98));
+    linear-gradient(180deg, var(--category-tint, rgba(255,255,255,0.44)), rgba(255, 255, 255, 1));
   box-shadow:
-    0 0 0 3px var(--category-color, #103b4d),
-    0 14px 28px rgba(16, 35, 30, 0.16);
+    0 0 0 4px var(--category-color, #103b4d),
+    0 18px 34px rgba(16, 35, 30, 0.18);
+  transform: translateY(-1px);
 }
 
 .lot-button.is-selected .lot-address {
   border-color: var(--category-color, #103b4d);
+  background: rgba(255, 255, 255, 0.92);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+}
+
+.lot-button.is-selected .lot-name {
+  color: var(--category-color, #103b4d);
+}
+
+.lot-button.is-selected .lot-badge {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--category-color, #103b4d);
+}
+
+.lot-selected-flag {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--category-color, #103b4d);
+  color: #ffffff;
+  font: 800 0.74rem/1 "Bahnschrift SemiCondensed", "Arial Narrow", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .lot-topline {

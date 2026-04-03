@@ -922,12 +922,16 @@ function renderList() {
     const border = hexToRgba(style.color, 0.3);
     const priceRange = averagePriceRange(building);
     const hours = buildingHours(building);
+    const selectedFlag = building.name === selectedBuildingName
+      ? `<div class="lot-selected-flag">Selected</div>`
+      : "";
     return `
       <button
         class="lot-button ${selected}"
         data-name="${building.name}"
         style="--category-color:${style.color}; --category-tint:${tint}; --category-border:${border}"
       >
+        ${selectedFlag}
         <div class="lot-topline">
           <span class="lot-name">${building.name}</span>
           <span class="lot-badge">
