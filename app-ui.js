@@ -133,7 +133,9 @@ function correctionControls() {
     markButton: document.getElementById("markCorrectionButton"),
     clearButton: document.getElementById("clearCorrectionButton"),
     status: document.getElementById("correctionStatus"),
-    list: document.getElementById("correctionList")
+    list: document.getElementById("correctionList"),
+    copyButton: document.getElementById("copyCorrectionDataButton"),
+    exportBox: document.getElementById("correctionExportBox")
   };
 }
 
@@ -231,7 +233,7 @@ function setBuildingCoordinates(building, point) {
 }
 
 function renderCorrectionList() {
-  const { list } = correctionControls();
+  const { list, exportBox } = correctionControls();
   if (!list) {
     return;
   }
@@ -244,6 +246,7 @@ function renderCorrectionList() {
   if (!correctedBuildings.length) {
     list.innerHTML = "";
     list.classList.add("is-hidden");
+    exportBox?.classList.add("is-hidden");
     return;
   }
 
@@ -268,17 +271,19 @@ function renderCorrectionList() {
 
 function updateCorrectionUI() {
   ensureCorrectionState();
-  const { markButton, clearButton, status } = correctionControls();
-  if (!markButton || !clearButton || !status) {
+  const { markButton, clearButton, copyButton, status } = correctionControls();
+  if (!markButton || !clearButton || !copyButton || !status) {
     return;
   }
 
   const building = selectedBuilding();
   const hasSelection = Boolean(building);
   const corrected = hasSelection && hasSavedCorrection(building);
+  const hasAnyCorrections = Object.keys(readCorrectionFlags()).length > 0;
 
   markButton.disabled = !hasSelection;
   clearButton.disabled = !corrected;
+  copyButton.disabled = !hasAnyCorrections;
 
   if (mapState.correctionPending && building) {
     status.textContent = `Click the map to place the corrected marker for ${building.name}.`;
@@ -362,6 +367,43 @@ function startCorrectionPlacement() {
 
   mapState.correctionPending = true;
   updateCorrectionUI();
+}
+
+async function copyCorrectionData() {
+  const { status, exportBox } = correctionControls();
+  const flags = readCorrectionFlags();
+  const hasAnyCorrections = Object.keys(flags).length > 0;
+
+  if (!status || !exportBox) {
+    return;
+  }
+
+  if (!hasAnyCorrections) {
+    exportBox.value = "";
+    exportBox.classList.add("is-hidden");
+    status.textContent = "There are no saved correction markers to copy yet.";
+    return;
+  }
+
+  const payload = JSON.stringify(flags, null, 2);
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(payload);
+      exportBox.value = "";
+      exportBox.classList.add("is-hidden");
+      status.textContent = "Correction data copied. Paste it into Codex and I can bake these locations into the shared app.";
+      return;
+    }
+  } catch {
+    // Fall back to showing the data in a copyable box below.
+  }
+
+  exportBox.value = payload;
+  exportBox.classList.remove("is-hidden");
+  exportBox.focus();
+  exportBox.select();
+  status.textContent = "Clipboard access was blocked. Copy the correction data shown below and paste it into Codex.";
 }
 
 function attachCorrectionMapBehavior() {
@@ -980,6 +1022,9 @@ useLocationButton.addEventListener("click", requestCurrentLocation);
 navigateButton.addEventListener("click", fetchTurnByTurnRoute);
 document.getElementById("markCorrectionButton")?.addEventListener("click", startCorrectionPlacement);
 document.getElementById("clearCorrectionButton")?.addEventListener("click", clearSelectedCorrection);
+document.getElementById("copyCorrectionDataButton")?.addEventListener("click", () => {
+  copyCorrectionData();
+});
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
