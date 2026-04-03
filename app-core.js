@@ -69,7 +69,14 @@ function snapViewportToMap() {
 
   const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
   window.setTimeout(() => {
-    mapCard.scrollIntoView({ behavior, block: "start" });
+    const rect = mapCard.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const absoluteTop = window.scrollY + rect.top;
+    const centeredTop = absoluteTop - Math.max((viewportHeight - rect.height) / 2, 24);
+    window.scrollTo({
+      top: Math.max(0, centeredTop),
+      behavior
+    });
   }, 120);
 }
 
