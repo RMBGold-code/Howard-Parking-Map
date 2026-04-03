@@ -599,6 +599,10 @@ function updateInstallButtonVisibility() {
   installAppButton.hidden = isInstalledApp() || !hostedAppUrl();
 }
 
+function syncInstalledAppState() {
+  document.body.classList.toggle("is-installed-app", isInstalledApp());
+}
+
 function updateInstallHelpUI() {
   const profile = deviceProfile();
   const showIosHelp = hostedAppUrl() && !isInstalledApp() && profile.isIOS;
@@ -819,6 +823,7 @@ window.addEventListener("beforeinstallprompt", (event) => {
 
 window.addEventListener("appinstalled", () => {
   deferredInstallPrompt = null;
+  syncInstalledAppState();
   updateInstallButtonVisibility();
   setAppActionStatus("Howard+DC landmarks was installed.");
 });
@@ -827,6 +832,7 @@ renderDetails();
 renderList();
 setRouteMode("walking");
 updateNavigationUI();
+syncInstalledAppState();
 updateInstallButtonVisibility();
 updateInstallHelpUI();
 updateQrPanel();
