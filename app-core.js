@@ -9,6 +9,9 @@ const buildingSearchStatus = document.getElementById("buildingSearchStatus");
 const parkingResults = document.getElementById("parkingResults");
 const installAppButton = document.getElementById("installAppButton");
 const shareAppButton = document.getElementById("shareAppButton");
+const appQrPanel = document.getElementById("appQrPanel");
+const appQrLink = document.getElementById("appQrLink");
+const appQrImage = document.getElementById("appQrImage");
 const appActionStatus = document.getElementById("appActionStatus");
 const useLocationButton = document.getElementById("useLocationButton");
 const navigateButton = document.getElementById("navigateButton");
@@ -136,6 +139,18 @@ function normalizeText(text) {
 
 function hostedAppUrl() {
   return window.location.protocol === "file:" ? "" : window.location.href;
+}
+
+function cleanHostedAppUrl() {
+  const rawUrl = hostedAppUrl();
+  if (!rawUrl) {
+    return "";
+  }
+
+  const url = new URL(rawUrl);
+  url.hash = "";
+  url.search = "";
+  return url.toString();
 }
 
 function setAppActionStatus(message) {

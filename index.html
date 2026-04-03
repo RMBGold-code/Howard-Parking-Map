@@ -44,9 +44,16 @@
               <button id="installAppButton" class="map-jump app-action" type="button" hidden>Install app</button>
               <button id="shareAppButton" class="map-jump app-action" type="button">Share app</button>
             </div>
-            <p id="appActionStatus" class="app-action-status" aria-live="polite">
-              Host this page online to share it and let others install it like an app.
-            </p>
+            <div id="appQrPanel" class="app-qr-panel">
+              <a id="appQrLink" class="app-qr-link" href="https://rmbgold-code.github.io/Howard-Parking-Map/" target="_blank" rel="noreferrer">
+                <img id="appQrImage" class="app-qr-image" alt="QR code to open Howard+DC landmarks on your phone">
+              </a>
+              <div class="app-qr-copy">
+                <p class="app-qr-title">Scan to open on your phone</p>
+                <p class="app-qr-note">Open the link, then use your phone browser's install or Add to Home Screen option.</p>
+                <p id="appActionStatus" class="app-action-status" aria-live="polite"></p>
+              </div>
+            </div>
           </div>
           <figure class="hero-photo-card">
             <img
