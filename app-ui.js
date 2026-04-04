@@ -873,23 +873,22 @@ window.addEventListener("appinstalled", () => {
   setAppActionStatus("Howard+DC landmarks was installed.");
 });
 
-renderDetails();
-renderList();
-setRouteMode("driving");
-updateNavigationUI();
-syncClearSelectionButton();
-syncInstalledAppState();
-updateInstallButtonVisibility();
-updateInstallHelpUI();
-updateQrPanel();
-registerServiceWorker();
-
 try {
+  renderDetails();
+  renderList();
+  setRouteMode("driving");
+  updateNavigationUI();
+  syncClearSelectionButton();
+  syncInstalledAppState();
+  updateInstallButtonVisibility();
+  updateInstallHelpUI();
+  updateQrPanel();
+  registerServiceWorker();
   createMap();
   setBasemap("street");
   fitView("campus");
   syncMapState();
 } catch (error) {
   console.error("Failed to initialize the live map.", error);
-  buildingSearchStatus.textContent = "The live map hit a saved-data problem while loading. Refresh to retry; the directory is still available.";
+  buildingSearchStatus.textContent = `BOOT ERROR ${error?.message || error}`;
 }

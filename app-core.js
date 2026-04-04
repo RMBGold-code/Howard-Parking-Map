@@ -345,11 +345,6 @@ function syncNavigationActivityUI(destination = selectedNavigationTarget(), orig
     stopNavigationButton.disabled = !active;
   }
 
-  const bannerMarkup = `
-    <strong class="nav-active-title">${routeModeLabel(mapState.routeMode)} navigation active</strong>
-    <span class="nav-active-copy">${mapState.navigationFollowMode ? "Follow mode is tracking your movement to" : "Following directions to"} ${escapeHtml(destination.name)}.</span>
-  `;
-
   [navigationActiveBanner, appMapNavigationBanner].forEach((banner) => {
     if (!banner) {
       return;
@@ -360,6 +355,11 @@ function syncNavigationActivityUI(destination = selectedNavigationTarget(), orig
       banner.classList.add("is-hidden");
       return;
     }
+
+    const bannerMarkup = `
+      <strong class="nav-active-title">${routeModeLabel(mapState.routeMode)} navigation active</strong>
+      <span class="nav-active-copy">${mapState.navigationFollowMode ? "Follow mode is tracking your movement to" : "Following directions to"} ${escapeHtml(destination.name)}.</span>
+    `;
 
     banner.innerHTML = bannerMarkup;
     banner.classList.remove("is-hidden");
