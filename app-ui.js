@@ -13,7 +13,7 @@ function selectBuilding(name, moveMap = false, snapToMap = false) {
 
   if (mapState.currentLocation && building) {
     clearRouteDetails();
-    drawNavigationGuide({ fitBounds: false });
+    fetchTurnByTurnRoute();
   }
 
   if (moveMap) {

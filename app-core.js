@@ -467,7 +467,7 @@ function selectParkingSpot(id, moveMap = false, snapToMap = false) {
 
   const spot = selectedParking();
   if (mapState.currentLocation && spot) {
-    drawNavigationGuide({ fitBounds: false });
+    fetchTurnByTurnRoute();
   }
 
   if (moveMap && spot && mapState.map) {
