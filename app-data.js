@@ -484,6 +484,83 @@ const buildings = [
     lng: -76.9551075697109
   },
   {
+    name: "Old Ebbitt Grill",
+    shortLabel: "Old Ebbitt",
+    aliases: ["old ebbitt", "old ebbitt grill"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "675 15th St. NW, Washington, DC 20005",
+    note: "Historic downtown restaurant and oyster bar with one of the strongest late-night food windows in central D.C.",
+    lat: 38.8975,
+    lng: -77.0331
+  },
+  {
+    name: "VUE Rooftop DC",
+    shortLabel: "VUE",
+    aliases: ["vue rooftop", "vue rooftop dc", "vue"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "515 15th St. NW, Washington, DC 20004",
+    note: "Rooftop food-and-cocktail stop near the White House that works well for date nights and special occasions.",
+    lat: 38.8966445922852,
+    lng: -77.0334777832031
+  },
+  {
+    name: "L'Ardente",
+    shortLabel: "L'Ardente",
+    aliases: ["l'ardente", "lardente"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "200 Massachusetts Ave. NW, Washington, DC 20001",
+    note: "Italian destination near Capital Crossing that is commonly picked for downtown date nights.",
+    lat: 38.90032,
+    lng: -77.01356
+  },
+  {
+    name: "Residents Cafe & Bar",
+    shortLabel: "Residents",
+    aliases: ["residents", "residents cafe", "residents cafe and bar"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "1306 18th St. NW, Washington, DC 20036",
+    note: "Dupont favorite for cocktails and dinner with a cozy date-night feel.",
+    lat: 38.9077,
+    lng: -77.04174
+  },
+  {
+    name: "Mission Dupont",
+    shortLabel: "Mission",
+    aliases: ["mission dupont", "mission"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "1606 20th St. NW, Washington, DC 20009",
+    note: "Dupont spot with tacos, margaritas, brunch, and a dependable late-night kitchen on peak nights.",
+    lat: 38.91102,
+    lng: -77.04569
+  },
+  {
+    name: "Cork Wine Bar",
+    shortLabel: "Cork",
+    aliases: ["cork", "cork wine bar"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "1805 14th St. NW, Washington, DC 20009",
+    note: "Wine-focused Logan Circle restaurant that fits the date-night and wine-bar side of the map.",
+    lat: 38.91428,
+    lng: -77.03196
+  },
+  {
+    name: "Gypsy Kitchen DC",
+    shortLabel: "Gypsy",
+    aliases: ["gypsy kitchen", "gypsy kitchen dc"],
+    category: "restaurant",
+    typeLabel: "Restaurant",
+    address: "1825 14th St. NW, Washington, DC 20009",
+    note: "14th Street restaurant with rooftop energy, cocktails, and shareable plates for date nights.",
+    lat: 38.91456,
+    lng: -77.03201
+  },
+  {
     name: "District Winery",
     shortLabel: "Winery",
     aliases: ["district winery", "winery"],
@@ -632,6 +709,13 @@ const foodPriceRanges = {
   "Ada's on the River": "$18-$42",
   "Ambar Clarendon": "$15-$22",
   "miXt Food Hall": "$10-$25",
+  "Old Ebbitt Grill": "$18-$42",
+  "VUE Rooftop DC": "$22-$49",
+  "L'Ardente": "$19-$44",
+  "Residents Cafe & Bar": "$16-$34",
+  "Mission Dupont": "$12-$26",
+  "Cork Wine Bar": "$16-$36",
+  "Gypsy Kitchen DC": "$16-$38",
   "District Winery": "$12-$20 plates, $20 tastings"
 };
 
@@ -693,6 +777,13 @@ const locationHours = {
   "Ada's on the River": "Mon-Fri 11:30 AM-11:00 PM; Sat-Sun 10:00 AM-11:00 PM; brunch Sat-Sun 10:00 AM-3:30 PM.",
   "Ambar Clarendon": "Mon-Thu 11:30 AM-9:30 PM; Fri 11:30 AM-10:30 PM; Sat 9:30 AM-10:30 PM; Sun 9:30 AM-9:30 PM.",
   "miXt Food Hall": "Mon 8:00 AM-8:00 PM; Tue-Wed 8:00 AM-9:00 PM; Thu 8:00 AM-10:00 PM; Fri 8:00 AM-12:00 AM; Sat 9:00 AM-12:00 AM; Sun 9:00 AM-8:00 PM.",
+  "Old Ebbitt Grill": "Mon-Fri 8:00 AM-2:00 AM; Sat-Sun 9:00 AM-2:00 AM; kitchen closes at 1:00 AM.",
+  "VUE Rooftop DC": "Sun 11:00 AM-12:00 AM; Mon-Thu 4:00 PM-12:00 AM; Fri 4:00 PM-1:00 AM; Sat 11:00 AM-1:00 AM.",
+  "L'Ardente": "Mon-Thu 11:30 AM-2:30 PM and 4:45 PM-10:00 PM; Fri 11:30 AM-2:30 PM and 4:45 PM-11:00 PM; Sat 11:00 AM-11:00 PM; Sun 11:00 AM-10:00 PM.",
+  "Residents Cafe & Bar": "Mon closed; Tue-Wed 5:00 PM-10:00 PM; Thu 5:00 PM-11:00 PM; Fri 5:00 PM-12:00 AM; Sat 11:00 AM-12:00 AM; Sun 11:00 AM-9:00 PM.",
+  "Mission Dupont": "Mon-Wed 4:00 PM-11:00 PM; Thu 4:00 PM-12:00 AM; Fri 4:00 PM-2:00 AM; Sat 11:00 AM-2:00 AM; Sun 11:00 AM-11:00 PM.",
+  "Cork Wine Bar": "Mon closed; Tue-Thu 5:30 PM-9:00 PM; Fri 5:30 PM-10:00 PM; Sat 12:00 PM-10:00 PM; Sun 12:00 PM-4:00 PM.",
+  "Gypsy Kitchen DC": "Mon-Wed 4:00 PM-10:00 PM; Thu-Fri 4:00 PM-11:00 PM; Sat brunch 11:00 AM-3:00 PM and dinner 4:00 PM-11:00 PM; Sun brunch 11:00 AM-3:00 PM and dinner 4:00 PM-10:00 PM.",
   "District Winery": "Tasting room closed Mon-Tue; Wed-Fri 4:00 PM-9:00 PM; Sat 12:00 PM-9:00 PM; Sun 12:00 PM-7:00 PM.",
   "Howard Theatre": "Show and event hours vary by schedule.",
   "9:30 Club": "Concert-night hours vary by show; box office and doors change by event.",

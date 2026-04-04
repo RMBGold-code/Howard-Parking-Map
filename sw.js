@@ -1,4 +1,4 @@
-const CACHE_NAME = "howard-landmarks-v33";
+const CACHE_NAME = "howard-landmarks-v34";
 const APP_SHELL = [
   ".",
   "index.html",
