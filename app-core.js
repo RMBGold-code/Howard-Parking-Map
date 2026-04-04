@@ -596,7 +596,9 @@ function stopNavigation() {
 }
 
 function setCurrentLocation(lat, lng, accuracy = 0) {
+  const previousLocation = mapState.currentLocation;
   mapState.currentLocation = { lat, lng };
+  const locationChanged = !previousLocation || distanceMiles(previousLocation, mapState.currentLocation) > 0.02;
 
   if (!mapState.map) {
     updateNavigationUI();
@@ -638,6 +640,12 @@ function setCurrentLocation(lat, lng, accuracy = 0) {
     }
   }
 
+  if (locationChanged) {
+    mapState.navigationActive = false;
+    mapState.navigationFallbackMessage = "";
+    clearNavigationGuide();
+  }
+
   updateNavigationUI();
 }
 
@@ -664,6 +672,12 @@ function drawNavigationGuide(options = {}) {
       dashArray: "10 10"
     }).addTo(mapState.map);
   } else {
+    mapState.navigationLine.setStyle({
+      color: "#103b4d",
+      weight: 4,
+      opacity: 0.8,
+      dashArray: "10 10"
+    });
     mapState.navigationLine.setLatLngs(points);
   }
 
