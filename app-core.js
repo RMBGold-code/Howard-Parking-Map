@@ -791,7 +791,7 @@ async function waitForRoutingWindow() {
 
 async function requestDrivingRouteFromService(origin, destination, service, options = {}) {
   const params = new URLSearchParams({
-    overview: options.overview || "simplified",
+    overview: options.overview || "full",
     geometries: "geojson",
     steps: options.steps === false ? "false" : "true",
     alternatives: "false"
@@ -832,6 +832,8 @@ async function requestDrivingRouteFromService(origin, destination, service, opti
 
 async function resolveDrivingRoute(origin, destination) {
   const attempts = DRIVING_ROUTE_SERVICES.flatMap((service) => ([
+    () => requestDrivingRouteFromService(origin, destination, service, { steps: true, overview: "full" }),
+    () => requestDrivingRouteFromService(origin, destination, service, { steps: false, overview: "full" }),
     () => requestDrivingRouteFromService(origin, destination, service, { steps: true, overview: "simplified" }),
     () => requestDrivingRouteFromService(origin, destination, service, { steps: false, overview: "simplified" })
   ]));
@@ -891,14 +893,16 @@ async function fetchTurnByTurnRoute() {
       mapState.navigationLine = L.polyline(points, {
         color: "#103b4d",
         weight: 4,
-        opacity: 0.88
+        opacity: 0.88,
+        smoothFactor: 0
       }).addTo(mapState.map);
     } else {
       mapState.navigationLine.setStyle({
         color: "#103b4d",
         weight: 4,
         opacity: 0.88,
-        dashArray: null
+        dashArray: null,
+        smoothFactor: 0
       });
       mapState.navigationLine.setLatLngs(points);
     }
