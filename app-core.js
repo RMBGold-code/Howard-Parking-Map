@@ -219,14 +219,49 @@ function estimatedTravelMinutes(miles, mode) {
   }
 
   if (mode === "driving") {
-    const effectiveMiles = miles * 1.18;
-    const averageUrbanSpeedMph = 22;
-    return (effectiveMiles / averageUrbanSpeedMph) * 60;
+    const roadMiles = (miles * 1.28) + 0.2;
+    const averageUrbanSpeedMph = 20;
+    const trafficDelayMinutes = Math.min(16, Math.max(3, miles * 1.6));
+    return ((roadMiles / averageUrbanSpeedMph) * 60) + trafficDelayMinutes;
   }
 
-  const effectiveMiles = miles * 1.1;
+  const pedestrianMiles = (miles * 1.08) + 0.05;
   const walkingSpeedMph = 3.0;
-  return (effectiveMiles / walkingSpeedMph) * 60;
+  const crossingDelayMinutes = Math.min(14, Math.max(4, miles * 2.8));
+  return ((pedestrianMiles / walkingSpeedMph) * 60) + crossingDelayMinutes;
+}
+
+function estimatedTravelDistanceMiles(miles, mode) {
+  if (!Number.isFinite(miles) || miles <= 0) {
+    return 0;
+  }
+
+  return mode === "driving"
+    ? (miles * 1.28) + 0.2
+    : (miles * 1.08) + 0.05;
+}
+
+function routeModeBasisLabel(mode) {
+  return mode === "driving"
+    ? "roads and traffic patterns"
+    : "sidewalks, crossings, and walkable street access";
+}
+
+function renderEstimatedRouteDetails(origin, destination) {
+  const directMiles = distanceMiles(origin, destination);
+  const estimatedMiles = estimatedTravelDistanceMiles(directMiles, mapState.routeMode);
+  const estimatedMinutes = estimatedTravelMinutes(directMiles, mapState.routeMode);
+
+  routeSummary.textContent = `${routeModeLabel(mapState.routeMode)} estimate: ${estimatedMiles.toFixed(2)} mi • about ${formatDuration(estimatedMinutes)}`;
+  routeSummary.classList.remove("is-hidden");
+
+  routeSteps.innerHTML = `
+    <div class="route-step">
+      <p class="route-step-title">Estimated ${mapState.routeMode} travel</p>
+      <div class="route-step-meta">Based on ${routeModeBasisLabel(mapState.routeMode)} from your starting point to ${destination.name}.</div>
+    </div>
+  `;
+  routeSteps.classList.remove("is-hidden");
 }
 
 function directionsUrl(origin, destination) {
@@ -605,7 +640,7 @@ function updateNavigationUI() {
   const miles = distanceMiles(origin, destination);
   const direction = compassDirection(bearingDegrees(origin, destination));
   const estimatedMinutes = estimatedTravelMinutes(miles, mapState.routeMode);
-  navigationStatus.textContent = `Ready to build a ${mapState.routeMode} route to ${destination.name}. It is about ${miles.toFixed(2)} miles ${direction} of you, or roughly ${formatDuration(estimatedMinutes)} by ${mapState.routeMode === "driving" ? "road" : "foot"} before live routing is loaded.`;
+  navigationStatus.textContent = `Ready to build a ${mapState.routeMode} route to ${destination.name}. It is about ${miles.toFixed(2)} miles ${direction} of you, or roughly ${formatDuration(estimatedMinutes)} using ${routeModeBasisLabel(mapState.routeMode)} before live routing is loaded.`;
 }
 
 function clearSelection() {
@@ -804,8 +839,9 @@ async function fetchTurnByTurnRoute() {
     }
     mapState.routeData = null;
     mapState.routeKey = "";
-    mapState.navigationFallbackMessage = `${routeModeLabel(mapState.routeMode)} turn-by-turn routing is unavailable right now for ${destination.name}. The direct guide line is still shown on the map.`;
+    mapState.navigationFallbackMessage = `${routeModeLabel(mapState.routeMode)} turn-by-turn routing is unavailable right now for ${destination.name}, so this is an estimate based on ${routeModeBasisLabel(mapState.routeMode)}.`;
     navigationStatus.textContent = mapState.navigationFallbackMessage;
+    renderEstimatedRouteDetails(origin, destination);
     drawNavigationGuide({ fitBounds: true });
   }
 }
