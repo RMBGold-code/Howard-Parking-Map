@@ -668,6 +668,34 @@ body {
   margin-top: 12px;
 }
 
+.nav-active-banner {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(16, 59, 77, 0.92), rgba(19, 63, 120, 0.9));
+  border: 1px solid rgba(16, 59, 77, 0.18);
+  color: #f5fbff;
+  box-shadow: 0 10px 24px rgba(16, 35, 30, 0.14);
+  animation: detailFadeIn 180ms ease;
+}
+
+.nav-active-banner.is-hidden {
+  display: none;
+}
+
+.nav-active-title {
+  font: 800 0.92rem/1.2 "Bahnschrift SemiCondensed", "Arial Narrow", sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nav-active-copy {
+  color: rgba(245, 251, 255, 0.9);
+  line-height: 1.45;
+}
+
 .detail-action:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -710,7 +738,19 @@ body {
 }
 
 .nav-action {
+  width: 100%;
   justify-content: center;
+}
+
+.nav-action-spacer {
+  min-height: 1px;
+  visibility: hidden;
+}
+
+.nav-stop {
+  border-color: rgba(178, 31, 45, 0.22);
+  background: rgba(255, 244, 244, 0.98);
+  color: #8f1f2d;
 }
 
 .nav-action:disabled {

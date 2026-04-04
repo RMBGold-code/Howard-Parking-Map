@@ -193,6 +193,7 @@
             <div class="detail-row"><strong>Navigation options</strong></div>
           </div>
         </div>
+        <div id="navigationActiveBanner" class="nav-active-banner is-hidden" aria-live="polite"></div>
         <div class="details-actions">
           <button id="clearSelectionButton" class="map-jump detail-action" type="button" disabled>Clear selection</button>
         </div>
@@ -209,6 +210,8 @@
           <div class="nav-actions">
             <button id="useLocationButton" class="map-jump nav-action" type="button">Use my location</button>
             <button id="navigateButton" class="map-jump nav-action" type="button" disabled>Navigate to selected</button>
+            <div class="nav-action-spacer" aria-hidden="true"></div>
+            <button id="stopNavigationButton" class="map-jump nav-action nav-stop" type="button" disabled>Stop navigation</button>
           </div>
           <p id="navigationStatus" class="nav-status" aria-live="polite">
             Select a landmark, then use your location to start navigation.
@@ -259,59 +262,5 @@
   <script src="app-data.js"></script>
   <script src="app-core.js"></script>
   <script src="app-ui.js"></script>
-  <script>
-    (function () {
-      const clearSelectionButton = document.getElementById("clearSelectionButton");
-
-      if (!clearSelectionButton) {
-        return;
-      }
-
-      function syncClearSelectionButton() {
-        clearSelectionButton.disabled = !(selectedBuildingName || mapState.selectedParkingId);
-      }
-
-      function clearSelection() {
-        selectedBuildingName = "";
-        mapState.selectedParkingId = "";
-
-        if (mapState.map) {
-          mapState.map.closePopup();
-        }
-
-        clearNavigationGuide();
-        renderDetails();
-        renderList();
-        syncMapState();
-        syncParkingSelection();
-        updateNavigationUI();
-        syncClearSelectionButton();
-      }
-
-      const originalSelectBuilding = selectBuilding;
-      selectBuilding = function (...args) {
-        const result = originalSelectBuilding.apply(this, args);
-        syncClearSelectionButton();
-        return result;
-      };
-
-      const originalSelectParkingSpot = selectParkingSpot;
-      selectParkingSpot = function (...args) {
-        const result = originalSelectParkingSpot.apply(this, args);
-        syncClearSelectionButton();
-        return result;
-      };
-
-      const originalRenderDetails = renderDetails;
-      renderDetails = function (...args) {
-        const result = originalRenderDetails.apply(this, args);
-        syncClearSelectionButton();
-        return result;
-      };
-
-      clearSelectionButton.addEventListener("click", clearSelection);
-      syncClearSelectionButton();
-    }());
-  </script>
 </body>
 </html>

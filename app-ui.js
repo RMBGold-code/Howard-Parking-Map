@@ -1,12 +1,15 @@
 function selectBuilding(name, moveMap = false, snapToMap = false) {
   selectedBuildingName = name;
   mapState.selectedParkingId = "";
+  mapState.navigationActive = false;
+  mapState.navigationFallbackMessage = "";
   const building = selectedBuilding();
   renderDetails();
   renderList();
   syncMapState();
   syncParkingSelection();
   updateNavigationUI();
+  syncClearSelectionButton();
 
   if (mapState.currentLocation && building) {
     clearRouteDetails();
@@ -814,6 +817,8 @@ installAppButton.addEventListener("click", installApp);
 shareAppButton.addEventListener("click", shareApp);
 useLocationButton.addEventListener("click", requestCurrentLocation);
 navigateButton.addEventListener("click", fetchTurnByTurnRoute);
+stopNavigationButton.addEventListener("click", stopNavigation);
+clearSelectionButton.addEventListener("click", clearSelection);
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
@@ -832,6 +837,7 @@ renderDetails();
 renderList();
 setRouteMode("walking");
 updateNavigationUI();
+syncClearSelectionButton();
 syncInstalledAppState();
 updateInstallButtonVisibility();
 updateInstallHelpUI();

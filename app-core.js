@@ -20,7 +20,9 @@ const appQrNote = document.getElementById("appQrNote");
 const appActionStatus = document.getElementById("appActionStatus");
 const useLocationButton = document.getElementById("useLocationButton");
 const navigateButton = document.getElementById("navigateButton");
+const stopNavigationButton = document.getElementById("stopNavigationButton");
 const clearSelectionButton = document.getElementById("clearSelectionButton");
+const navigationActiveBanner = document.getElementById("navigationActiveBanner");
 const navigationStatus = document.getElementById("navigationStatus");
 const navigationLink = document.getElementById("navigationLink");
 const routeSummary = document.getElementById("routeSummary");
@@ -49,6 +51,8 @@ const mapState = {
   userLocationMarker: null,
   userAccuracyRing: null,
   navigationLine: null,
+  navigationActive: false,
+  navigationFallbackMessage: "",
   routeMode: "walking",
   routeData: null
 };
@@ -231,6 +235,30 @@ function formatDuration(minutes) {
   return remaining ? `${hours} hr ${remaining} min` : `${hours} hr`;
 }
 
+function syncNavigationActivityUI(destination = selectedNavigationTarget(), origin = mapState.currentLocation) {
+  const active = Boolean(mapState.navigationActive && origin && destination);
+
+  if (stopNavigationButton) {
+    stopNavigationButton.disabled = !active;
+  }
+
+  if (!navigationActiveBanner) {
+    return;
+  }
+
+  if (!active) {
+    navigationActiveBanner.textContent = "";
+    navigationActiveBanner.classList.add("is-hidden");
+    return;
+  }
+
+  navigationActiveBanner.innerHTML = `
+    <strong class="nav-active-title">${routeModeLabel(mapState.routeMode)} navigation active</strong>
+    <span class="nav-active-copy">Following directions to ${escapeHtml(destination.name)}.</span>
+  `;
+  navigationActiveBanner.classList.remove("is-hidden");
+}
+
 function stepInstruction(step) {
   const maneuver = step.maneuver || {};
   const type = maneuver.type || "continue";
@@ -359,6 +387,8 @@ function syncParkingSelection() {
 
 function selectParkingSpot(id, moveMap = false, snapToMap = false) {
   mapState.selectedParkingId = id;
+  mapState.navigationActive = false;
+  mapState.navigationFallbackMessage = "";
   clearRouteDetails();
   syncParkingSelection();
   updateNavigationUI();
@@ -444,6 +474,8 @@ function showParkingMarkers(destination, parkingSpots) {
 
 function setRouteMode(mode) {
   mapState.routeMode = mode === "driving" ? "driving" : "walking";
+  mapState.navigationActive = false;
+  mapState.navigationFallbackMessage = "";
   routeModeButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.routeMode === mapState.routeMode);
   });
@@ -490,6 +522,7 @@ function updateNavigationUI() {
   const parkingSpot = selectedParking();
 
   navigateButton.textContent = parkingSpot ? "Navigate to selected parking" : "Navigate to selected";
+  syncNavigationActivityUI(destination, origin);
 
   navigateButton.disabled = !(origin && destination);
 
@@ -524,6 +557,12 @@ function updateNavigationUI() {
     return;
   }
 
+  if (mapState.navigationActive) {
+    navigationStatus.textContent = mapState.navigationFallbackMessage
+      || `${routeModeLabel(mapState.routeMode)} navigation is active for ${destination.name}.`;
+    return;
+  }
+
   clearRouteDetails();
   const miles = distanceMiles(origin, destination);
   const direction = compassDirection(bearingDegrees(origin, destination));
@@ -533,6 +572,8 @@ function updateNavigationUI() {
 function clearSelection() {
   selectedBuildingName = "";
   mapState.selectedParkingId = "";
+  mapState.navigationActive = false;
+  mapState.navigationFallbackMessage = "";
 
   if (mapState.map) {
     mapState.map.closePopup();
@@ -545,6 +586,13 @@ function clearSelection() {
   syncParkingSelection();
   updateNavigationUI();
   syncClearSelectionButton();
+}
+
+function stopNavigation() {
+  mapState.navigationActive = false;
+  mapState.navigationFallbackMessage = "";
+  clearNavigationGuide();
+  updateNavigationUI();
 }
 
 function setCurrentLocation(lat, lng, accuracy = 0) {
@@ -635,6 +683,9 @@ async function fetchTurnByTurnRoute() {
     return;
   }
 
+  mapState.navigationActive = true;
+  mapState.navigationFallbackMessage = "";
+  syncNavigationActivityUI(destination, origin);
   navigationStatus.textContent = `Building a ${mapState.routeMode} route to ${destination.name}...`;
   routeSummary.classList.add("is-hidden");
   routeSteps.classList.add("is-hidden");
@@ -681,12 +732,14 @@ async function fetchTurnByTurnRoute() {
     }
 
     mapState.routeData = route;
+    mapState.navigationFallbackMessage = "";
     mapState.map.fitBounds(points, { padding: [32, 32] });
     renderRouteDetails(route);
     updateNavigationUI();
   } catch {
     mapState.routeData = null;
-    navigationStatus.textContent = `${routeModeLabel(mapState.routeMode)} turn-by-turn routing is unavailable right now for ${destination.name}. The direct guide line is still shown on the map.`;
+    mapState.navigationFallbackMessage = `${routeModeLabel(mapState.routeMode)} turn-by-turn routing is unavailable right now for ${destination.name}. The direct guide line is still shown on the map.`;
+    navigationStatus.textContent = mapState.navigationFallbackMessage;
     drawNavigationGuide({ fitBounds: true });
   }
 }
