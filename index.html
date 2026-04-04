@@ -11,8 +11,8 @@
   <meta name="apple-mobile-web-app-title" content="Howard+DC landmarks">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
-  <link rel="stylesheet" href="vendor/leaflet.css?v=64">
-  <link rel="stylesheet" href="styles.css?v=64">
+  <link rel="stylesheet" href="vendor/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="page-shell">
@@ -265,32 +265,9 @@
 
   </div>
 
-  <script>
-    window.__HOWARD_ASSET_VERSION__ = "64";
-    window.__HOWARD_MAP_BOOTED__ = false;
-    document.addEventListener("DOMContentLoaded", () => {
-      const status = document.getElementById("mapBootStatus");
-      if (!status) {
-        return;
-      }
-
-      status.textContent = "Loading the live map...";
-      status.classList.remove("is-hidden");
-
-      window.setTimeout(() => {
-        if (window.__HOWARD_MAP_BOOTED__) {
-          return;
-        }
-
-        status.textContent = "The live map scripts did not finish loading. Refresh to retry.";
-        status.classList.remove("is-hidden");
-        status.style.background = "rgba(120, 16, 26, 0.9)";
-      }, 5000);
-    });
-  </script>
-  <script src="vendor/leaflet.js?v=64"></script>
-  <script src="app-data.js?v=64"></script>
-  <script src="app-core.js?v=64"></script>
-  <script src="app-ui.js?v=64"></script>
+  <script src="vendor/leaflet.js"></script>
+  <script src="app-data.js"></script>
+  <script src="app-core.js"></script>
+  <script src="app-ui.js"></script>
 </body>
 </html>

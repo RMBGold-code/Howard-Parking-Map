@@ -762,7 +762,7 @@ function registerServiceWorker() {
   }
 
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register(`./sw.js${assetVersionSuffix}`)
+    navigator.serviceWorker.register("./sw.js")
       .then((registration) => {
         serviceWorkerRegistration = registration;
 

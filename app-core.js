@@ -103,9 +103,6 @@ let activeDirectorySuggestionIndex = -1;
 let deferredInstallPrompt = null;
 let serviceWorkerRegistration = null;
 let leafletLoadPromise = null;
-const assetVersionSuffix = window.__HOWARD_ASSET_VERSION__
-  ? `?v=${window.__HOWARD_ASSET_VERSION__}`
-  : "";
 
 mapState.voiceGuidanceEnabled = loadVoiceGuidancePreference();
 
@@ -151,8 +148,8 @@ function ensureLeafletLoaded() {
 
   const fallbacks = [
     {
-      css: `vendor/leaflet.css${assetVersionSuffix}`,
-      js: `vendor/leaflet.js${assetVersionSuffix}`
+      css: "vendor/leaflet.css",
+      js: "vendor/leaflet.js"
     },
     {
       css: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
@@ -200,7 +197,6 @@ function clearMapBootStatus() {
     return;
   }
 
-  window.__HOWARD_MAP_BOOTED__ = true;
   mapBootStatus.textContent = "";
   mapBootStatus.classList.add("is-hidden");
   mapBootStatus.style.background = "";
@@ -1561,7 +1557,6 @@ function createMap() {
   window.setTimeout(() => {
     map.invalidateSize();
     fitView(mapState.currentView);
-    window.__HOWARD_MAP_BOOTED__ = true;
   }, 0);
 }
 
