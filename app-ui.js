@@ -1,6 +1,7 @@
 function selectBuilding(name, moveMap = false, snapToMap = false) {
   selectedBuildingName = name;
   mapState.selectedParkingId = "";
+  disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
   const building = selectedBuilding();

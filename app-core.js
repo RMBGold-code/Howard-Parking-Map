@@ -60,7 +60,12 @@ const mapState = {
   routeData: null,
   routeKey: "",
   routeRequestKeyPending: "",
-  lastRouteRequestAt: 0
+  lastRouteRequestAt: 0,
+  navigationFollowMode: false,
+  geolocationWatchId: null,
+  lastRouteRefreshAt: 0,
+  lastRouteRefreshPoint: null,
+  lastUserMarkerTapAt: 0
 };
 
 const DRIVING_ROUTE_SERVICES = [
@@ -75,6 +80,10 @@ const DRIVING_ROUTE_SERVICES = [
 ];
 
 const ROUTE_REQUEST_SPACING_MS = 1100;
+const FOLLOW_NAVIGATION_ZOOM = 19;
+const FOLLOW_ROUTE_REFRESH_MS = 9000;
+const FOLLOW_ROUTE_REFRESH_MILES = 0.03;
+const DOUBLE_TAP_WINDOW_MS = 360;
 
 let activeFilter = "all";
 let selectedBuildingName = "";
@@ -339,7 +348,7 @@ function syncNavigationActivityUI(destination = selectedNavigationTarget(), orig
 
   navigationActiveBanner.innerHTML = `
     <strong class="nav-active-title">${routeModeLabel(mapState.routeMode)} navigation active</strong>
-    <span class="nav-active-copy">Following directions to ${escapeHtml(destination.name)}.</span>
+    <span class="nav-active-copy">${mapState.navigationFollowMode ? "Follow mode is tracking your movement to" : "Following directions to"} ${escapeHtml(destination.name)}.</span>
   `;
   navigationActiveBanner.classList.remove("is-hidden");
 }
@@ -473,6 +482,7 @@ function syncParkingSelection() {
 
 function selectParkingSpot(id, moveMap = false, snapToMap = false) {
   mapState.selectedParkingId = id;
+  disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
   clearRouteDetails();
@@ -561,6 +571,7 @@ function showParkingMarkers(destination, parkingSpots) {
 
 function setRouteMode(mode) {
   mapState.routeMode = mode === "driving" ? "driving" : "walking";
+  disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
   routeModeButtons.forEach((button) => {
@@ -638,7 +649,9 @@ function updateNavigationUI() {
   }
 
   if (mapState.routeData && mapState.routeKey === currentRouteKey) {
-    navigationStatus.textContent = `${routeModeLabel(mapState.routeMode)} directions are ready for ${destination.name}.`;
+    navigationStatus.textContent = mapState.navigationFollowMode
+      ? `${routeModeLabel(mapState.routeMode)} follow mode is active for ${destination.name}.`
+      : `${routeModeLabel(mapState.routeMode)} directions are ready for ${destination.name}. Double-click your blue location marker to enter follow mode.`;
     return;
   }
 
@@ -658,6 +671,7 @@ function updateNavigationUI() {
 function clearSelection() {
   selectedBuildingName = "";
   mapState.selectedParkingId = "";
+  disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
 
@@ -675,10 +689,150 @@ function clearSelection() {
 }
 
 function stopNavigation() {
+  disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
   clearNavigationGuide();
   updateNavigationUI();
+}
+
+function stopLocationWatch() {
+  if (!("geolocation" in navigator) || mapState.geolocationWatchId === null) {
+    return;
+  }
+
+  navigator.geolocation.clearWatch(mapState.geolocationWatchId);
+  mapState.geolocationWatchId = null;
+}
+
+function disableNavigationFollowMode() {
+  mapState.navigationFollowMode = false;
+  mapState.lastRouteRefreshAt = 0;
+  mapState.lastRouteRefreshPoint = null;
+  stopLocationWatch();
+}
+
+function syncFollowViewport() {
+  if (!mapState.navigationFollowMode || !mapState.map || !mapState.currentLocation) {
+    return;
+  }
+
+  const latLng = [mapState.currentLocation.lat, mapState.currentLocation.lng];
+  const currentZoom = mapState.map.getZoom();
+  const targetZoom = Math.max(currentZoom, FOLLOW_NAVIGATION_ZOOM);
+
+  if (targetZoom > currentZoom) {
+    mapState.map.flyTo(latLng, targetZoom, {
+      duration: 0.7
+    });
+    return;
+  }
+
+  mapState.map.panTo(latLng, {
+    animate: true,
+    duration: 0.7,
+    noMoveStart: true
+  });
+}
+
+function maybeRefreshFollowRoute(previousLocation, nextLocation) {
+  if (!mapState.navigationFollowMode || !mapState.navigationActive || !selectedNavigationTarget()) {
+    return;
+  }
+
+  syncFollowViewport();
+
+  if (!nextLocation) {
+    return;
+  }
+
+  const referencePoint = mapState.lastRouteRefreshPoint || previousLocation || nextLocation;
+  const movedMiles = distanceMiles(referencePoint, nextLocation);
+  const enoughTime = (Date.now() - mapState.lastRouteRefreshAt) >= FOLLOW_ROUTE_REFRESH_MS;
+
+  if ((!mapState.routeData || movedMiles >= FOLLOW_ROUTE_REFRESH_MILES) && enoughTime && !mapState.routeRequestKeyPending) {
+    fetchTurnByTurnRoute();
+  }
+}
+
+function startNavigationLocationWatch() {
+  if (!("geolocation" in navigator) || mapState.geolocationWatchId !== null) {
+    return;
+  }
+
+  mapState.geolocationWatchId = navigator.geolocation.watchPosition(
+    (position) => {
+      const previousLocation = mapState.currentLocation
+        ? { ...mapState.currentLocation }
+        : null;
+      const { latitude, longitude, accuracy } = position.coords;
+      setCurrentLocation(latitude, longitude, accuracy, {
+        preserveNavigation: true,
+        followMap: true
+      });
+      maybeRefreshFollowRoute(previousLocation, mapState.currentLocation);
+    },
+    () => {
+      navigationStatus.textContent = "Follow mode is on, but live movement updates are unavailable right now.";
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 3000
+    }
+  );
+}
+
+function activateNavigationFollowMode() {
+  if (!mapState.navigationActive || !mapState.currentLocation || !selectedNavigationTarget() || !mapState.map) {
+    navigationStatus.textContent = "Start navigation first, then double-click your blue location marker to enter follow mode.";
+    return;
+  }
+
+  mapState.navigationFollowMode = true;
+  setBasemap("street");
+  mapState.lastRouteRefreshAt = Date.now();
+  mapState.lastRouteRefreshPoint = mapState.currentLocation
+    ? { ...mapState.currentLocation }
+    : null;
+  syncFollowViewport();
+  startNavigationLocationWatch();
+  updateNavigationUI();
+}
+
+function handleUserMarkerDoubleActivate(event) {
+  if (event?.originalEvent) {
+    event.originalEvent.preventDefault?.();
+    event.originalEvent.stopPropagation?.();
+  }
+  activateNavigationFollowMode();
+}
+
+function handleUserMarkerTap(event) {
+  const originalEvent = event?.originalEvent;
+  const isTouchLike = Boolean(
+    originalEvent
+    && (
+      originalEvent.pointerType === "touch"
+      || originalEvent.pointerType === "pen"
+      || originalEvent.type?.startsWith("touch")
+    )
+  );
+
+  if (!isTouchLike) {
+    return;
+  }
+
+  const now = Date.now();
+  if (now - mapState.lastUserMarkerTapAt <= DOUBLE_TAP_WINDOW_MS) {
+    mapState.lastUserMarkerTapAt = 0;
+    originalEvent.preventDefault?.();
+    originalEvent.stopPropagation?.();
+    activateNavigationFollowMode();
+    return;
+  }
+
+  mapState.lastUserMarkerTapAt = now;
 }
 
 function setCurrentLocation(lat, lng, accuracy = 0, options = {}) {
@@ -688,6 +842,7 @@ function setCurrentLocation(lat, lng, accuracy = 0, options = {}) {
   mapState.currentLocationDescription = options.description
     || (accuracy ? `Accuracy about ${Math.round(accuracy)} meters` : "Live browser geolocation");
   const locationChanged = !previousLocation || distanceMiles(previousLocation, mapState.currentLocation) > 0.02;
+  const preserveNavigation = options.preserveNavigation === true;
 
   if (!mapState.map) {
     updateNavigationUI();
@@ -702,6 +857,8 @@ function setCurrentLocation(lat, lng, accuracy = 0, options = {}) {
       fillColor: "#0d5a8d",
       fillOpacity: 0.95
     }).addTo(mapState.map);
+    mapState.userLocationMarker.on("dblclick", handleUserMarkerDoubleActivate);
+    mapState.userLocationMarker.on("click", handleUserMarkerTap);
   } else {
     mapState.userLocationMarker.setLatLng([lat, lng]);
   }
@@ -729,10 +886,15 @@ function setCurrentLocation(lat, lng, accuracy = 0, options = {}) {
     }
   }
 
-  if (locationChanged) {
+  if (locationChanged && !preserveNavigation) {
+    disableNavigationFollowMode();
     mapState.navigationActive = false;
     mapState.navigationFallbackMessage = "";
     clearNavigationGuide();
+  }
+
+  if (options.followMap) {
+    syncFollowViewport();
   }
 
   updateNavigationUI();
@@ -910,7 +1072,13 @@ async function fetchTurnByTurnRoute() {
     mapState.routeData = route;
     mapState.routeKey = requestKey;
     mapState.navigationFallbackMessage = "";
-    mapState.map.fitBounds(points, { padding: [32, 32] });
+    mapState.lastRouteRefreshAt = Date.now();
+    mapState.lastRouteRefreshPoint = origin ? { ...origin } : null;
+    if (mapState.navigationFollowMode) {
+      syncFollowViewport();
+    } else {
+      mapState.map.fitBounds(points, { padding: [32, 32] });
+    }
     renderRouteDetails(route);
     updateNavigationUI();
   } catch (error) {
