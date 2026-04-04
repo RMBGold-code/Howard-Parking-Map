@@ -19,6 +19,7 @@ const appQrImage = document.getElementById("appQrImage");
 const appQrNote = document.getElementById("appQrNote");
 const appActionStatus = document.getElementById("appActionStatus");
 const useLocationButton = document.getElementById("useLocationButton");
+const startingLocationButton = document.getElementById("startingLocationButton");
 const navigateButton = document.getElementById("navigateButton");
 const stopNavigationButton = document.getElementById("stopNavigationButton");
 const clearSelectionButton = document.getElementById("clearSelectionButton");
@@ -48,6 +49,8 @@ const mapState = {
   selectedParkingId: "",
   currentView: "campus",
   currentLocation: null,
+  currentLocationLabel: "Current position",
+  currentLocationDescription: "Live browser geolocation",
   userLocationMarker: null,
   userAccuracyRing: null,
   navigationLine: null,
@@ -631,9 +634,12 @@ function stopNavigation() {
   updateNavigationUI();
 }
 
-function setCurrentLocation(lat, lng, accuracy = 0) {
+function setCurrentLocation(lat, lng, accuracy = 0, options = {}) {
   const previousLocation = mapState.currentLocation;
   mapState.currentLocation = { lat, lng };
+  mapState.currentLocationLabel = options.label || "Current position";
+  mapState.currentLocationDescription = options.description
+    || (accuracy ? `Accuracy about ${Math.round(accuracy)} meters` : "Live browser geolocation");
   const locationChanged = !previousLocation || distanceMiles(previousLocation, mapState.currentLocation) > 0.02;
 
   if (!mapState.map) {
@@ -656,8 +662,8 @@ function setCurrentLocation(lat, lng, accuracy = 0) {
   mapState.userLocationMarker.bindPopup(`
     <div class="popup-shell" style="--category-color:#0d5a8d; --category-tint:rgba(13, 90, 141, 0.14)">
       <div class="popup-category">Your location</div>
-      <p class="popup-title">Current position</p>
-      <p class="popup-meta">${accuracy ? `Accuracy about ${Math.round(accuracy)} meters` : "Live browser geolocation"}</p>
+      <p class="popup-title">${escapeHtml(mapState.currentLocationLabel)}</p>
+      <p class="popup-meta">${escapeHtml(mapState.currentLocationDescription)}</p>
     </div>
   `);
 

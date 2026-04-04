@@ -448,14 +448,19 @@ function fitDestinationAndParking(destination, parkingSpots) {
   mapState.map.fitBounds(points, { padding: [26, 26] });
 }
 
-async function searchExternalBuilding(queryText) {
+async function searchExternalBuilding(queryText, options = {}) {
+  const bounded = options.bounded !== false;
+  const viewbox = options.viewbox || "-77.265,39.045,-76.905,38.765";
   const params = new URLSearchParams({
     q: queryText,
     format: "jsonv2",
-    limit: "1",
-    bounded: "1",
-    viewbox: "-77.265,39.045,-76.905,38.765"
+    limit: "1"
   });
+
+  if (bounded) {
+    params.set("bounded", "1");
+    params.set("viewbox", viewbox);
+  }
 
   const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
     headers: {
@@ -533,6 +538,57 @@ async function handleBuildingSearch(event) {
     showSearchMarker(destination);
     fitDestinationAndParking(destination, []);
     buildingSearchStatus.textContent = `I found ${destination.name}, but nearby parking search is unavailable right now.`;
+  }
+}
+
+async function chooseStartingLocation() {
+  const query = window.prompt("Enter a landmark or address for your starting location:");
+  if (!query) {
+    return;
+  }
+
+  const rawQuery = query.trim();
+  if (!rawQuery) {
+    navigationStatus.textContent = "Enter a landmark or address to set a starting location.";
+    return;
+  }
+
+  navigationStatus.textContent = `Looking up starting location for "${rawQuery}"...`;
+
+  const localMatch = findLocalBuilding(rawQuery);
+  const start = localMatch
+    ? destinationFromLocalMatch(localMatch)
+    : await searchExternalBuilding(rawQuery, {
+      bounded: true,
+      viewbox: "-77.45,39.25,-76.45,38.45"
+    }).catch(() => null);
+
+  if (!start) {
+    navigationStatus.textContent = `No starting-location match found for "${rawQuery}".`;
+    return;
+  }
+
+  setCurrentLocation(
+    start.lat,
+    start.lng,
+    0,
+    {
+      label: localMatch ? localMatch.name : "Starting location",
+      description: start.address
+    }
+  );
+
+  if (mapState.map) {
+    mapState.map.flyTo([start.lat, start.lng], Math.max(mapState.map.getZoom(), 16), {
+      duration: 0.7
+    });
+  }
+
+  if (selectedNavigationTarget()) {
+    navigationStatus.textContent = `Starting location set to ${start.name}. Building a ${mapState.routeMode} route...`;
+    fetchTurnByTurnRoute();
+  } else {
+    navigationStatus.textContent = `Starting location set to ${start.name}. Select a destination to navigate.`;
   }
 }
 
@@ -816,6 +872,7 @@ buildingFinder.addEventListener("submit", handleBuildingSearch);
 installAppButton.addEventListener("click", installApp);
 shareAppButton.addEventListener("click", shareApp);
 useLocationButton.addEventListener("click", requestCurrentLocation);
+startingLocationButton.addEventListener("click", chooseStartingLocation);
 navigateButton.addEventListener("click", fetchTurnByTurnRoute);
 stopNavigationButton.addEventListener("click", stopNavigation);
 clearSelectionButton.addEventListener("click", clearSelection);
