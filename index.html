@@ -287,5 +287,21 @@
   <script src="app-data.js?v=67"></script>
   <script src="app-core.js?v=67"></script>
   <script src="app-ui.js?v=67"></script>
+  <script>
+    if (window.location.search.includes("diag=1")) {
+      window.addEventListener("load", () => {
+        const status = document.getElementById("buildingSearchStatus");
+        if (!status) {
+          return;
+        }
+
+        const hasLeaflet = typeof window.L !== "undefined";
+        const hasCreateMap = typeof window.createMap === "function";
+        const hasSetBasemap = typeof window.setBasemap === "function";
+        const hasMapMarkup = Boolean(document.querySelector("#map .leaflet-pane, #map .leaflet-control-container"));
+        status.textContent = `DIAG hasL=${hasLeaflet} createMap=${hasCreateMap} setBasemap=${hasSetBasemap} mapMarkup=${hasMapMarkup}`;
+      });
+    }
+  </script>
 </body>
 </html>
