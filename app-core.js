@@ -74,7 +74,6 @@ const DRIVING_ROUTE_SERVICES = [
   }
 ];
 
-const ROUTE_REQUEST_TIMEOUT_MS = 12000;
 const ROUTE_REQUEST_SPACING_MS = 1100;
 
 let activeFilter = "all";
@@ -793,22 +792,6 @@ async function waitForRoutingWindow() {
   mapState.lastRouteRequestAt = Date.now();
 }
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = ROUTE_REQUEST_TIMEOUT_MS) {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    return await fetch(url, {
-      ...options,
-      cache: "no-store",
-      mode: "cors",
-      signal: controller.signal
-    });
-  } finally {
-    window.clearTimeout(timeoutId);
-  }
-}
-
 async function requestDrivingRouteFromService(origin, destination, service, options = {}) {
   const params = new URLSearchParams({
     overview: options.overview || "simplified",
@@ -828,18 +811,12 @@ async function requestDrivingRouteFromService(origin, destination, service, opti
 
   let response;
   try {
-    response = await fetchWithTimeout(
-      `${service.routeBase}/${coordinates}?${params.toString()}`,
-      {
-        headers: {
-          Accept: "application/json"
-        }
+    response = await fetch(`${service.routeBase}/${coordinates}?${params.toString()}`, {
+      headers: {
+        Accept: "application/json"
       }
-    );
+    });
   } catch (error) {
-    if (error?.name === "AbortError") {
-      throw new Error(`${service.name} timed out`);
-    }
     throw new Error(`${service.name} could not be reached`);
   }
 
