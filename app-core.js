@@ -765,6 +765,43 @@ function drawNavigationGuide(options = {}) {
   updateNavigationUI();
 }
 
+async function snapPointToNetwork(point, mode) {
+  const normalized = normalizePoint(point?.lat, point?.lng);
+  if (!normalized) {
+    return null;
+  }
+
+  const params = new URLSearchParams({
+    number: "1"
+  });
+
+  const response = await fetch(
+    `https://router.project-osrm.org/nearest/v1/${routeProfile(mode)}/${normalized.lng},${normalized.lat}?${params.toString()}`,
+    {
+      headers: {
+        Accept: "application/json"
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Nearest-point lookup failed with status ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const waypoint = payload.waypoints?.[0];
+  const location = waypoint?.location;
+
+  if (!Array.isArray(location) || location.length < 2) {
+    return normalized;
+  }
+
+  return {
+    lat: Number(location[1]),
+    lng: Number(location[0])
+  };
+}
+
 async function fetchTurnByTurnRoute() {
   const destination = selectedNavigationTarget();
   const origin = mapState.currentLocation;
@@ -781,8 +818,6 @@ async function fetchTurnByTurnRoute() {
   navigationStatus.textContent = `Building a ${mapState.routeMode} route to ${destination.name}...`;
   routeSummary.classList.add("is-hidden");
   routeSteps.classList.add("is-hidden");
-
-  const coordinates = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
   const params = new URLSearchParams({
     overview: "full",
     geometries: "geojson",
@@ -790,6 +825,16 @@ async function fetchTurnByTurnRoute() {
   });
 
   try {
+    const [snappedOrigin, snappedDestination] = await Promise.all([
+      snapPointToNetwork(origin, mapState.routeMode).catch(() => origin),
+      snapPointToNetwork(destination, mapState.routeMode).catch(() => destination)
+    ]);
+
+    if (requestKey !== buildRouteKey(mapState.currentLocation, selectedNavigationTarget(), mapState.routeMode)) {
+      return;
+    }
+
+    const coordinates = `${snappedOrigin.lng},${snappedOrigin.lat};${snappedDestination.lng},${snappedDestination.lat}`;
     const response = await fetch(`https://router.project-osrm.org/route/v1/${routeProfile(mapState.routeMode)}/${coordinates}?${params.toString()}`, {
       headers: {
         Accept: "application/json"
