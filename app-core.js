@@ -810,17 +810,20 @@ function requestCurrentLocation() {
     return;
   }
 
-  navigationStatus.textContent = "Finding your current location...";
+  navigationStatus.textContent = "Finding your current location with a fresh browser fix...";
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
       const { latitude, longitude, accuracy } = position.coords;
       setCurrentLocation(latitude, longitude, accuracy);
+      const accuracyText = accuracy ? ` Accuracy about ${Math.round(accuracy)} meters.` : "";
 
       const destination = selectedNavigationTarget();
       if (destination) {
+        navigationStatus.textContent = `Location updated.${accuracyText} Building a ${mapState.routeMode} route to ${destination.name}...`;
         fetchTurnByTurnRoute();
       } else if (mapState.map) {
+        navigationStatus.textContent = `Location updated.${accuracyText} Select a destination to navigate.`;
         mapState.map.flyTo([latitude, longitude], Math.max(mapState.map.getZoom(), 16), {
           duration: 0.7
         });
@@ -831,8 +834,8 @@ function requestCurrentLocation() {
     },
     {
       enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 60000
+      timeout: 15000,
+      maximumAge: 0
     }
   );
 }
