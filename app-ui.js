@@ -762,22 +762,20 @@ function registerServiceWorker() {
   }
 
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js")
+    navigator.serviceWorker.register("./sw.js?v=65")
       .then((registration) => {
         serviceWorkerRegistration = registration;
-
-        const checkForAppUpdate = () => {
-          registration.update().catch(() => {
-            // Ignore update polling failures in offline or unsupported contexts.
-          });
-        };
-
-        window.addEventListener("focus", checkForAppUpdate);
-        document.addEventListener("visibilitychange", () => {
-          if (document.visibilityState === "visible") {
-            checkForAppUpdate();
-          }
-        });
+        if ("caches" in window) {
+          caches.keys()
+            .then((keys) => Promise.all(
+              keys
+                .filter((key) => key.startsWith("howard-landmarks-"))
+                .map((key) => caches.delete(key))
+            ))
+            .catch(() => {
+              // Ignore cache cleanup failures.
+            });
+        }
       })
       .catch(() => {
         // Ignore registration failures in unsupported/local contexts.
