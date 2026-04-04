@@ -719,25 +719,6 @@ body {
   position: relative;
 }
 
-.map-boot-status {
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 18px;
-  z-index: 650;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(16, 35, 30, 0.84);
-  color: #f7fbff;
-  font: 700 0.94rem/1.45 "Bahnschrift SemiCondensed", "Arial Narrow", sans-serif;
-  letter-spacing: 0.02em;
-  box-shadow: 0 10px 26px rgba(16, 35, 30, 0.22);
-}
-
-.map-boot-status.is-hidden {
-  display: none;
-}
-
 .app-map-controls {
   display: none;
 }

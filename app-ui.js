@@ -909,23 +909,14 @@ updateInstallHelpUI();
 updateQrPanel();
 registerServiceWorker();
 
-setMapBootStatus("Loading the live map...");
-
 ensureLeafletLoaded()
   .then(() => {
-    setMapBootStatus("Starting the live map...");
     createMap();
     setBasemap("street");
     fitView("campus");
     syncMapState();
-    window.setTimeout(() => {
-      if (mapState.map && window.L) {
-        clearMapBootStatus();
-      }
-    }, 2000);
   })
   .catch((error) => {
     console.error("Failed to initialize the live map.", error);
-    setMapBootStatus("The live map could not start. Refresh to retry. The landmark directory is still available.", true);
     buildingSearchStatus.textContent = "The live map engine could not load. Refresh to retry; the directory is still available.";
   });

@@ -1,7 +1,6 @@
 const buildingList = document.getElementById("lotList");
 const buildingDetails = document.getElementById("lotDetails");
 const mapCanvas = document.getElementById("map");
-const mapBootStatus = document.getElementById("mapBootStatus");
 const listSearchBox = document.getElementById("searchBox");
 const listSuggestions = document.getElementById("listSuggestions");
 const buildingFinder = document.getElementById("buildingFinder");
@@ -148,10 +147,6 @@ function ensureLeafletLoaded() {
 
   const fallbacks = [
     {
-      css: "vendor/leaflet.css",
-      js: "vendor/leaflet.js"
-    },
-    {
       css: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
       js: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     },
@@ -178,28 +173,6 @@ function ensureLeafletLoaded() {
   })();
 
   return leafletLoadPromise;
-}
-
-function setMapBootStatus(message, isError = false) {
-  if (!mapBootStatus) {
-    return;
-  }
-
-  mapBootStatus.textContent = message;
-  mapBootStatus.classList.remove("is-hidden");
-  mapBootStatus.style.background = isError
-    ? "rgba(120, 16, 26, 0.9)"
-    : "rgba(16, 35, 30, 0.84)";
-}
-
-function clearMapBootStatus() {
-  if (!mapBootStatus) {
-    return;
-  }
-
-  mapBootStatus.textContent = "";
-  mapBootStatus.classList.add("is-hidden");
-  mapBootStatus.style.background = "";
 }
 
 function snapViewportToMap() {
@@ -1485,11 +1458,7 @@ function detailMarkup(building) {
 
 function createMap() {
   if (!window.L) {
-    throw new Error("Leaflet is not available.");
-  }
-
-  if (!mapCanvas) {
-    throw new Error("Map container is missing.");
+    return;
   }
 
   const campusCenter = [38.9211, -77.0181];
@@ -1516,12 +1485,6 @@ function createMap() {
   });
 
   streetLayer.addTo(map);
-  streetLayer.once("load", () => {
-    clearMapBootStatus();
-  });
-  streetLayer.on("tileerror", () => {
-    setMapBootStatus("The map loaded, but the basemap tiles are having trouble loading. Refresh to retry.", true);
-  });
   mapState.map = map;
   mapState.baseLayers = {
     street: streetLayer,
