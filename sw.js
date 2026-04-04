@@ -1,14 +1,14 @@
-const CACHE_NAME = "howard-landmarks-v63";
+const CACHE_NAME = "howard-landmarks-v64";
 const APP_SHELL = [
   ".",
   "index.html",
-  "styles.css",
-  "app-data.js",
-  "app-core.js",
-  "app-ui.js",
+  "styles.css?v=64",
+  "app-data.js?v=64",
+  "app-core.js?v=64",
+  "app-ui.js?v=64",
   "manifest.json",
-  "vendor/leaflet.css",
-  "vendor/leaflet.js",
+  "vendor/leaflet.css?v=64",
+  "vendor/leaflet.js?v=64",
   "icons/icon.svg",
   "icons/install-qr.svg"
 ];
