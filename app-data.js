@@ -535,8 +535,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "1606 20th St. NW, Washington, DC 20009",
     note: "Dupont spot with tacos, margaritas, brunch, and a dependable late-night kitchen on peak nights.",
-    lat: 38.91102,
-    lng: -77.04569
+    lat: 38.91153556082737,
+    lng: -77.04505823442278
   },
   {
     name: "Cork Wine Bar",
@@ -546,8 +546,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "1805 14th St. NW, Washington, DC 20009",
     note: "Wine-focused Logan Circle restaurant that fits the date-night and wine-bar side of the map.",
-    lat: 38.91428,
-    lng: -77.03196
+    lat: 38.914406061125746,
+    lng: -77.03159885878824
   },
   {
     name: "Gypsy Kitchen DC",
@@ -557,8 +557,8 @@ const buildings = [
     typeLabel: "Restaurant",
     address: "1825 14th St. NW, Washington, DC 20009",
     note: "14th Street restaurant with rooftop energy, cocktails, and shareable plates for date nights.",
-    lat: 38.91456,
-    lng: -77.03201
+    lat: 38.91498832817345,
+    lng: -77.03149961274978
   },
   {
     name: "District Winery",
