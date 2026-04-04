@@ -1066,7 +1066,7 @@ function createMap() {
     zoomControl: false,
     scrollWheelZoom: true,
     minZoom: 12,
-    maxZoom: 21
+    maxZoom: 20
   });
   map.setView(campusCenter, 16);
   L.control.zoom({ position: "topright" }).addTo(map);
@@ -1074,11 +1074,13 @@ function createMap() {
   const streetLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
     subdomains: "abcd",
     maxZoom: 20,
+    maxNativeZoom: 20,
     attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
   });
 
   const imageryLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-    maxZoom: 21,
+    maxZoom: 20,
+    maxNativeZoom: 19,
     attribution: "Sources: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
   });
 
