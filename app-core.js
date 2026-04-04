@@ -1387,7 +1387,7 @@ function detailMarkup(building) {
 
 function createMap() {
   if (!window.L) {
-    return;
+    throw new Error("Leaflet did not load.");
   }
 
   const campusCenter = [38.9211, -77.0181];
