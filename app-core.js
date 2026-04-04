@@ -101,8 +101,79 @@ let directorySuggestions = [];
 let activeDirectorySuggestionIndex = -1;
 let deferredInstallPrompt = null;
 let serviceWorkerRegistration = null;
+let leafletLoadPromise = null;
 
 mapState.voiceGuidanceEnabled = loadVoiceGuidancePreference();
+
+function loadExternalScript(src) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[data-dynamic-src="${src}"]`);
+    if (existing) {
+      existing.addEventListener("load", resolve, { once: true });
+      existing.addEventListener("error", () => reject(new Error(`Failed to load ${src}`)), { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = false;
+    script.dataset.dynamicSrc = src;
+    script.addEventListener("load", resolve, { once: true });
+    script.addEventListener("error", () => reject(new Error(`Failed to load ${src}`)), { once: true });
+    document.head.appendChild(script);
+  });
+}
+
+function ensureLeafletStylesheet(href) {
+  if (document.querySelector(`link[data-dynamic-href="${href}"]`)) {
+    return;
+  }
+
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  link.dataset.dynamicHref = href;
+  document.head.appendChild(link);
+}
+
+function ensureLeafletLoaded() {
+  if (window.L) {
+    return Promise.resolve();
+  }
+
+  if (leafletLoadPromise) {
+    return leafletLoadPromise;
+  }
+
+  const fallbacks = [
+    {
+      css: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+      js: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    },
+    {
+      css: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css",
+      js: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+    }
+  ];
+
+  leafletLoadPromise = (async () => {
+    for (const source of fallbacks) {
+      try {
+        ensureLeafletStylesheet(source.css);
+        await loadExternalScript(source.js);
+        if (window.L) {
+          return;
+        }
+      } catch (error) {
+        // Try the next fallback source.
+      }
+    }
+
+    throw new Error("Leaflet failed to load");
+  })();
+
+  return leafletLoadPromise;
+}
 
 function snapViewportToMap() {
   if (!mapCanvas) {

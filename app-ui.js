@@ -909,12 +909,14 @@ updateInstallHelpUI();
 updateQrPanel();
 registerServiceWorker();
 
-try {
-  createMap();
-  setBasemap("street");
-  fitView("campus");
-  syncMapState();
-} catch (error) {
-  console.error("Failed to initialize the live map.", error);
-  buildingSearchStatus.textContent = "The live map hit a saved-data problem while loading. Refresh to retry; the directory is still available.";
-}
+ensureLeafletLoaded()
+  .then(() => {
+    createMap();
+    setBasemap("street");
+    fitView("campus");
+    syncMapState();
+  })
+  .catch((error) => {
+    console.error("Failed to initialize the live map.", error);
+    buildingSearchStatus.textContent = "The live map engine could not load. Refresh to retry; the directory is still available.";
+  });
