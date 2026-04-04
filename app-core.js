@@ -482,7 +482,8 @@ function selectParkingSpot(id, moveMap = false, snapToMap = false) {
 
   const spot = selectedParking();
   if (mapState.currentLocation && spot) {
-    fetchTurnByTurnRoute();
+    clearRouteDetails();
+    updateNavigationUI();
   }
 
   if (moveMap && spot && mapState.map) {
@@ -568,11 +569,7 @@ function setRouteMode(mode) {
 
   clearRouteDetails();
 
-  if (mapState.currentLocation && selectedNavigationTarget()) {
-    fetchTurnByTurnRoute();
-  } else {
-    updateNavigationUI();
-  }
+  updateNavigationUI();
 }
 
 function clearNavigationGuide() {
@@ -946,8 +943,9 @@ function requestCurrentLocation() {
 
       const destination = selectedNavigationTarget();
       if (destination) {
-        navigationStatus.textContent = `Location updated.${accuracyText} Building a ${mapState.routeMode} route to ${destination.name}...`;
-        fetchTurnByTurnRoute();
+        clearRouteDetails();
+        navigationStatus.textContent = `Location updated.${accuracyText} Select Navigate to selected to build a ${mapState.routeMode} route to ${destination.name}.`;
+        updateNavigationUI();
       } else if (mapState.map) {
         navigationStatus.textContent = `Location updated.${accuracyText} Select a destination to navigate.`;
         mapState.map.flyTo([latitude, longitude], Math.max(mapState.map.getZoom(), 16), {

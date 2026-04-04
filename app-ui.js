@@ -13,7 +13,7 @@ function selectBuilding(name, moveMap = false, snapToMap = false) {
 
   if (mapState.currentLocation && building) {
     clearRouteDetails();
-    fetchTurnByTurnRoute();
+    updateNavigationUI();
   }
 
   if (moveMap) {
@@ -585,8 +585,9 @@ async function chooseStartingLocation() {
   }
 
   if (selectedNavigationTarget()) {
-    navigationStatus.textContent = `Starting location set to ${start.name}. Building a ${mapState.routeMode} route...`;
-    fetchTurnByTurnRoute();
+    clearRouteDetails();
+    navigationStatus.textContent = `Starting location set to ${start.name}. Select Navigate to selected to build a ${mapState.routeMode} route.`;
+    updateNavigationUI();
   } else {
     navigationStatus.textContent = `Starting location set to ${start.name}. Select a destination to navigate.`;
   }
