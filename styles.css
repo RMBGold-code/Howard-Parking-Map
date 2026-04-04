@@ -711,6 +711,131 @@ body {
   border: 1px solid rgba(19, 63, 120, 0.12);
 }
 
+.map-stage {
+  position: relative;
+}
+
+.app-map-controls {
+  display: none;
+}
+
+.is-installed-app .app-map-controls {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 700;
+  display: grid;
+  gap: 10px;
+}
+
+.app-map-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(15, 43, 71, 0.2);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14px 28px rgba(16, 35, 30, 0.18);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+
+.app-map-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 32px rgba(16, 35, 30, 0.22);
+}
+
+.app-map-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 12px 24px rgba(16, 35, 30, 0.1);
+}
+
+.app-map-button.is-active {
+  background: rgba(216, 238, 255, 0.98);
+  border-color: rgba(13, 90, 141, 0.34);
+}
+
+.app-map-button-icon {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  color: #123f58;
+}
+
+.app-map-button-icon-location::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+}
+
+.app-map-button-icon-location::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  margin-top: -3px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.app-map-button-icon-route::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 8px;
+  width: 12px;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(-35deg);
+  border-radius: 999px;
+}
+
+.app-map-button-icon-route::after {
+  content: "";
+  position: absolute;
+  right: 1px;
+  top: 2px;
+  width: 7px;
+  height: 7px;
+  border-top: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  transform: rotate(10deg);
+}
+
+.app-map-button-icon-voice::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: 5px;
+  width: 7px;
+  height: 8px;
+  background: currentColor;
+  clip-path: polygon(0 25%, 55% 25%, 100% 0, 100% 100%, 55% 75%, 0 75%);
+}
+
+.app-map-button-icon-voice::after {
+  content: "";
+  position: absolute;
+  right: 1px;
+  top: 3px;
+  width: 8px;
+  height: 12px;
+  border-right: 2px solid currentColor;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-radius: 0 12px 12px 0;
+}
+
 .nav-card-header {
   margin-bottom: 14px;
 }
@@ -937,6 +1062,10 @@ body {
   z-index: 40;
   padding: 6px 0 10px;
   background: linear-gradient(180deg, rgba(241, 247, 255, 0.98), rgba(241, 247, 255, 0.9));
+}
+
+.is-installed-app .nav-card {
+  display: none;
 }
 
 .is-installed-app .directory-dropdown[open] .directory-search-wrap .search-box {

@@ -29,6 +29,9 @@ const navigationStatus = document.getElementById("navigationStatus");
 const navigationLink = document.getElementById("navigationLink");
 const routeSummary = document.getElementById("routeSummary");
 const routeSteps = document.getElementById("routeSteps");
+const mapUseLocationButton = document.getElementById("mapUseLocationButton");
+const mapNavigateButton = document.getElementById("mapNavigateButton");
+const mapVoiceGuidanceButton = document.getElementById("mapVoiceGuidanceButton");
 const routeModeButtons = [...document.querySelectorAll("[data-route-mode]")];
 const legendButtons = [...document.querySelectorAll(".legend-chip")];
 const mapButtons = [...document.querySelectorAll("[data-view]")];
@@ -403,18 +406,25 @@ function speakImmediateMessage(message) {
 
 function syncVoiceGuidanceButton() {
   if (!voiceGuidanceButton) {
-    return;
+    // Continue to sync app map button state below.
   }
 
   const supported = canUseVoiceGuidance();
-  voiceGuidanceButton.disabled = !supported;
-  voiceGuidanceButton.textContent = mapState.voiceGuidanceEnabled ? "Voice guidance on" : "Voice guidance off";
-  voiceGuidanceButton.classList.toggle("is-active", mapState.voiceGuidanceEnabled);
+  if (voiceGuidanceButton) {
+    voiceGuidanceButton.disabled = !supported;
+    voiceGuidanceButton.textContent = mapState.voiceGuidanceEnabled ? "Voice guidance on" : "Voice guidance off";
+    voiceGuidanceButton.classList.toggle("is-active", mapState.voiceGuidanceEnabled);
+    voiceGuidanceButton.title = supported
+      ? "Toggle spoken navigation instructions"
+      : "Voice guidance is unavailable in this browser";
+  }
 
-  if (supported) {
-    voiceGuidanceButton.title = "Toggle spoken navigation instructions";
-  } else {
-    voiceGuidanceButton.title = "Voice guidance is unavailable in this browser";
+  if (mapVoiceGuidanceButton) {
+    mapVoiceGuidanceButton.disabled = !supported;
+    mapVoiceGuidanceButton.classList.toggle("is-active", mapState.voiceGuidanceEnabled);
+    mapVoiceGuidanceButton.title = supported
+      ? (mapState.voiceGuidanceEnabled ? "Voice guidance on" : "Voice guidance off")
+      : "Voice guidance is unavailable in this browser";
   }
 }
 
@@ -751,6 +761,14 @@ function updateNavigationUI() {
   syncVoiceGuidanceButton();
 
   navigateButton.disabled = !(origin && destination);
+  if (mapNavigateButton) {
+    mapNavigateButton.disabled = !(origin && destination);
+    mapNavigateButton.title = parkingSpot ? "Navigate to selected parking" : "Navigate to selected";
+  }
+  if (mapUseLocationButton) {
+    mapUseLocationButton.disabled = false;
+    mapUseLocationButton.title = "Use my location";
+  }
 
   if (!(origin && destination)) {
     navigationLink.classList.add("is-hidden");

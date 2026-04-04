@@ -880,6 +880,9 @@ startingLocationButton.addEventListener("click", chooseStartingLocation);
 navigateButton.addEventListener("click", fetchTurnByTurnRoute);
 stopNavigationButton.addEventListener("click", stopNavigation);
 voiceGuidanceButton?.addEventListener("click", toggleVoiceGuidance);
+mapUseLocationButton?.addEventListener("click", requestCurrentLocation);
+mapNavigateButton?.addEventListener("click", fetchTurnByTurnRoute);
+mapVoiceGuidanceButton?.addEventListener("click", toggleVoiceGuidance);
 clearSelectionButton.addEventListener("click", clearSelection);
 
 window.addEventListener("beforeinstallprompt", (event) => {
