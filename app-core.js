@@ -388,6 +388,19 @@ function stopVoiceGuidancePlayback() {
   window.speechSynthesis.cancel();
 }
 
+function speakImmediateMessage(message) {
+  if (!mapState.voiceGuidanceEnabled || !canUseVoiceGuidance() || !message) {
+    return;
+  }
+
+  stopVoiceGuidancePlayback();
+  const utterance = new SpeechSynthesisUtterance(message);
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  window.speechSynthesis.speak(utterance);
+}
+
 function syncVoiceGuidanceButton() {
   if (!voiceGuidanceButton) {
     return;
@@ -459,6 +472,8 @@ function toggleVoiceGuidance() {
     const destination = selectedNavigationTarget();
     if (destination && mapState.routeData) {
       speakNavigationGuidance(mapState.routeData, destination, { force: true, includeSummary: true });
+    } else {
+      speakImmediateMessage("Voice guidance is now on.");
     }
   } else {
     navigationStatus.textContent = "Voice guidance is off.";
