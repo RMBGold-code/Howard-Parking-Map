@@ -198,6 +198,24 @@
           <button id="clearSelectionButton" class="map-jump detail-action" type="button" disabled>Clear selection</button>
         </div>
 
+        <div class="correction-card">
+          <div class="nav-card-header">
+            <p class="section-label">Marker correction</p>
+            <h3>Fix selected landmark placement</h3>
+          </div>
+          <p class="correction-copy">
+            Select a landmark, then click <strong>Mark selected on map</strong> and tap the correct spot.
+          </p>
+          <div class="nav-actions correction-actions">
+            <button id="markCorrectionButton" class="map-jump nav-action" type="button" disabled>Mark selected on map</button>
+            <button id="clearCorrectionButton" class="map-jump nav-action nav-stop" type="button" disabled>Clear selected correction</button>
+            <button id="copyCorrectionDataButton" class="map-jump nav-action" type="button">Copy correction data</button>
+          </div>
+          <p id="correctionStatus" class="nav-status" aria-live="polite">
+            No correction mode active.
+          </p>
+        </div>
+
         <div class="nav-card">
           <div class="nav-card-header">
             <p class="section-label">Navigation</p>

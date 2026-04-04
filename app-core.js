@@ -22,6 +22,10 @@ const useLocationButton = document.getElementById("useLocationButton");
 const navigateButton = document.getElementById("navigateButton");
 const stopNavigationButton = document.getElementById("stopNavigationButton");
 const clearSelectionButton = document.getElementById("clearSelectionButton");
+const markCorrectionButton = document.getElementById("markCorrectionButton");
+const clearCorrectionButton = document.getElementById("clearCorrectionButton");
+const copyCorrectionDataButton = document.getElementById("copyCorrectionDataButton");
+const correctionStatus = document.getElementById("correctionStatus");
 const navigationActiveBanner = document.getElementById("navigationActiveBanner");
 const navigationStatus = document.getElementById("navigationStatus");
 const navigationLink = document.getElementById("navigationLink");
@@ -325,6 +329,186 @@ function selectedParking() {
   return mapState.parkingOptions.find((spot) => spot.id === mapState.selectedParkingId) || null;
 }
 
+const CORRECTION_STORAGE_KEY = "howard-landmark-corrections-v2";
+const baseBuildingPoints = new Map(
+  buildings.map((building) => [building.name, normalizePoint(building.lat, building.lng)])
+);
+let correctionModeActive = false;
+let correctionTargetName = "";
+
+function loadCorrectionStore() {
+  try {
+    const raw = window.localStorage.getItem(CORRECTION_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveCorrectionStore(store) {
+  window.localStorage.setItem(CORRECTION_STORAGE_KEY, JSON.stringify(store, null, 2));
+}
+
+function correctionForBuilding(name) {
+  const correction = loadCorrectionStore()[name];
+  return normalizePoint(correction?.lat, correction?.lng);
+}
+
+function applySavedCorrections() {
+  const store = loadCorrectionStore();
+
+  buildings.forEach((building) => {
+    const corrected = normalizePoint(store[building.name]?.lat, store[building.name]?.lng);
+    const base = baseBuildingPoints.get(building.name);
+    const point = corrected || base;
+    if (!point) {
+      return;
+    }
+    building.lat = point.lat;
+    building.lng = point.lng;
+  });
+}
+
+function updateBuildingLayerPosition(name) {
+  const building = buildings.find((item) => item.name === name);
+  const layer = mapState.layers.get(name);
+  const point = buildingPoint(building);
+
+  if (!building || !layer || !point) {
+    return;
+  }
+
+  layer.setLatLng([point.lat, point.lng]);
+  layer.setPopupContent(popupMarkup(building));
+}
+
+function syncCorrectionButtons() {
+  if (typeof markCorrectionButton === "undefined" || !markCorrectionButton) {
+    return;
+  }
+
+  const building = selectedBuilding();
+  const hasCorrection = building ? Boolean(correctionForBuilding(building.name)) : false;
+
+  markCorrectionButton.disabled = !building;
+  clearCorrectionButton.disabled = !hasCorrection;
+}
+
+function setCorrectionStatus(message) {
+  if (typeof correctionStatus === "undefined" || !correctionStatus) {
+    return;
+  }
+  correctionStatus.textContent = message;
+}
+
+function cancelCorrectionMode(message = "No correction mode active.") {
+  correctionModeActive = false;
+  correctionTargetName = "";
+  setCorrectionStatus(message);
+  syncCorrectionButtons();
+}
+
+function beginCorrectionMode() {
+  const building = selectedBuilding();
+  if (!building) {
+    setCorrectionStatus("Select a landmark first, then mark its correct location.");
+    syncCorrectionButtons();
+    return;
+  }
+
+  correctionModeActive = true;
+  correctionTargetName = building.name;
+  setCorrectionStatus(`Correction mode active for ${building.name}. Tap the correct point on the map.`);
+  syncCorrectionButtons();
+}
+
+function placeCorrection(latlng) {
+  const building = buildings.find((item) => item.name === correctionTargetName);
+  if (!building) {
+    cancelCorrectionMode();
+    return;
+  }
+
+  const point = normalizePoint(latlng?.lat, latlng?.lng);
+  if (!point) {
+    setCorrectionStatus("That point could not be saved. Try tapping the map again.");
+    return;
+  }
+
+  const store = loadCorrectionStore();
+  store[building.name] = point;
+  saveCorrectionStore(store);
+
+  building.lat = point.lat;
+  building.lng = point.lng;
+  updateBuildingLayerPosition(building.name);
+  syncMapState();
+  renderDetails();
+  renderList();
+  if (typeof syncParkingSelection === "function") {
+    syncParkingSelection();
+  }
+  if (typeof updateNavigationUI === "function") {
+    updateNavigationUI();
+  }
+  cancelCorrectionMode(`Saved correction for ${building.name}.`);
+}
+
+function clearSelectedCorrection() {
+  const building = selectedBuilding();
+  if (!building) {
+    setCorrectionStatus("Select a landmark first, then clear its correction.");
+    syncCorrectionButtons();
+    return;
+  }
+
+  const store = loadCorrectionStore();
+  delete store[building.name];
+  saveCorrectionStore(store);
+
+  const base = baseBuildingPoints.get(building.name);
+  if (base) {
+    building.lat = base.lat;
+    building.lng = base.lng;
+    updateBuildingLayerPosition(building.name);
+  }
+
+  syncMapState();
+  renderDetails();
+  renderList();
+  if (typeof updateNavigationUI === "function") {
+    updateNavigationUI();
+  }
+  cancelCorrectionMode(`Cleared saved correction for ${building.name}.`);
+}
+
+async function copyCorrectionData() {
+  const payload = JSON.stringify(loadCorrectionStore(), null, 2);
+
+  if (!payload || payload === "{}") {
+    setCorrectionStatus("No saved correction data yet.");
+    return;
+  }
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(payload);
+      setCorrectionStatus("Correction data copied. Paste it here when you want me to bake in the coordinates.");
+      return;
+    }
+  } catch {
+    // Fall through to prompt fallback.
+  }
+
+  window.prompt("Copy this correction data:", payload);
+  setCorrectionStatus("Correction data is ready to copy from the prompt.");
+}
+
 function selectedNavigationTarget() {
   return selectedParking() || selectedBuilding();
 }
@@ -386,6 +570,7 @@ function syncParkingSelection() {
 }
 
 function selectParkingSpot(id, moveMap = false, snapToMap = false) {
+  cancelCorrectionMode();
   mapState.selectedParkingId = id;
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
@@ -570,6 +755,7 @@ function updateNavigationUI() {
 }
 
 function clearSelection() {
+  cancelCorrectionMode();
   selectedBuildingName = "";
   mapState.selectedParkingId = "";
   mapState.navigationActive = false;
@@ -839,6 +1025,7 @@ function detailMarkup(building) {
   const tint = hexToRgba(style.color, 0.12);
   const border = hexToRgba(style.color, 0.32);
   const hours = buildingHours(building);
+  const corrected = correctionForBuilding(building.name);
   return `
     <div class="detail-shell" style="--category-color:${style.color}; --category-tint:${tint}; --category-border:${border}">
       <h2>${building.name}</h2>
@@ -859,6 +1046,10 @@ function detailMarkup(building) {
         <div class="detail-row">
           <strong>Hours</strong>
           <span>${hours}</span>
+        </div>
+        <div class="detail-row">
+          <strong>Marker status</strong>
+          <span>${corrected ? "Manually corrected on this device." : "Using shared source coordinates."}</span>
         </div>
       </div>
     </div>
@@ -924,6 +1115,14 @@ function createMap() {
     mapState.layers.set(building.name, layer);
   });
 
+  map.on("click", (event) => {
+    if (!correctionModeActive) {
+      return;
+    }
+
+    placeCorrection(event.latlng);
+  });
+
   window.setTimeout(() => {
     map.invalidateSize();
     fitView(mapState.currentView);
@@ -952,11 +1151,13 @@ function renderDetails() {
         <div class="detail-row"><strong>Navigation options</strong></div>
       </div>
     `;
+    syncCorrectionButtons();
     syncClearSelectionButton();
     return;
   }
 
   buildingDetails.innerHTML = detailMarkup(building);
+  syncCorrectionButtons();
   syncClearSelectionButton();
 }
 
