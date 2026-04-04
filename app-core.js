@@ -22,6 +22,7 @@ const useLocationButton = document.getElementById("useLocationButton");
 const startingLocationButton = document.getElementById("startingLocationButton");
 const navigateButton = document.getElementById("navigateButton");
 const stopNavigationButton = document.getElementById("stopNavigationButton");
+const voiceGuidanceButton = document.getElementById("voiceGuidanceButton");
 const clearSelectionButton = document.getElementById("clearSelectionButton");
 const navigationActiveBanner = document.getElementById("navigationActiveBanner");
 const navigationStatus = document.getElementById("navigationStatus");
@@ -65,7 +66,9 @@ const mapState = {
   geolocationWatchId: null,
   lastRouteRefreshAt: 0,
   lastRouteRefreshPoint: null,
-  lastUserMarkerTapAt: 0
+  lastUserMarkerTapAt: 0,
+  voiceGuidanceEnabled: false,
+  lastSpokenInstructionKey: ""
 };
 
 const DRIVING_ROUTE_SERVICES = [
@@ -94,6 +97,8 @@ let directorySuggestions = [];
 let activeDirectorySuggestionIndex = -1;
 let deferredInstallPrompt = null;
 let serviceWorkerRegistration = null;
+
+mapState.voiceGuidanceEnabled = loadVoiceGuidancePreference();
 
 function snapViewportToMap() {
   if (!mapCanvas) {
@@ -353,6 +358,113 @@ function syncNavigationActivityUI(destination = selectedNavigationTarget(), orig
   navigationActiveBanner.classList.remove("is-hidden");
 }
 
+function canUseVoiceGuidance() {
+  return typeof window !== "undefined"
+    && "speechSynthesis" in window
+    && typeof SpeechSynthesisUtterance !== "undefined";
+}
+
+function loadVoiceGuidancePreference() {
+  try {
+    return window.localStorage.getItem("howard-voice-guidance") === "on";
+  } catch (error) {
+    return false;
+  }
+}
+
+function persistVoiceGuidancePreference() {
+  try {
+    window.localStorage.setItem("howard-voice-guidance", mapState.voiceGuidanceEnabled ? "on" : "off");
+  } catch (error) {
+    // Ignore storage errors in private or restricted browsing contexts.
+  }
+}
+
+function stopVoiceGuidancePlayback() {
+  if (!canUseVoiceGuidance()) {
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+}
+
+function syncVoiceGuidanceButton() {
+  if (!voiceGuidanceButton) {
+    return;
+  }
+
+  const supported = canUseVoiceGuidance();
+  voiceGuidanceButton.disabled = !supported;
+  voiceGuidanceButton.textContent = mapState.voiceGuidanceEnabled ? "Voice guidance on" : "Voice guidance off";
+  voiceGuidanceButton.classList.toggle("is-active", mapState.voiceGuidanceEnabled);
+
+  if (supported) {
+    voiceGuidanceButton.title = "Toggle spoken navigation instructions";
+  } else {
+    voiceGuidanceButton.title = "Voice guidance is unavailable in this browser";
+  }
+}
+
+function speakNavigationGuidance(route, destination, options = {}) {
+  if (!mapState.voiceGuidanceEnabled || !canUseVoiceGuidance() || !route) {
+    return;
+  }
+
+  const steps = route.legs.flatMap((leg) => leg.steps || []).filter((step) => step.distance > 0);
+  if (!steps.length) {
+    return;
+  }
+
+  const nextStep = steps[0];
+  const nextInstruction = stepInstruction(nextStep);
+  const instructionKey = `${destination?.name || ""}|${nextInstruction}|${Math.round(nextStep.distance)}`;
+  if (!options.force && mapState.lastSpokenInstructionKey === instructionKey) {
+    return;
+  }
+
+  mapState.lastSpokenInstructionKey = instructionKey;
+  stopVoiceGuidancePlayback();
+
+  const parts = [];
+  if (options.includeSummary !== false) {
+    parts.push(`Driving route ready for ${destination.name}. ${formatDistanceMiles(route.distance)} total, about ${formatDuration(route.duration / 60)}.`);
+  }
+  parts.push(`Next step: ${nextInstruction}. Continue for ${formatDistanceMiles(nextStep.distance)}.`);
+
+  const utterance = new SpeechSynthesisUtterance(parts.join(" "));
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  window.speechSynthesis.speak(utterance);
+}
+
+function toggleVoiceGuidance() {
+  if (!canUseVoiceGuidance()) {
+    navigationStatus.textContent = "Voice guidance is not available in this browser.";
+    syncVoiceGuidanceButton();
+    return;
+  }
+
+  mapState.voiceGuidanceEnabled = !mapState.voiceGuidanceEnabled;
+  if (!mapState.voiceGuidanceEnabled) {
+    mapState.lastSpokenInstructionKey = "";
+    stopVoiceGuidancePlayback();
+  }
+
+  persistVoiceGuidancePreference();
+  syncVoiceGuidanceButton();
+
+  if (mapState.voiceGuidanceEnabled) {
+    navigationStatus.textContent = "Voice guidance is on. Spoken navigation updates will play when routes are ready.";
+    const destination = selectedNavigationTarget();
+    if (destination && mapState.routeData) {
+      speakNavigationGuidance(mapState.routeData, destination, { force: true, includeSummary: true });
+    }
+  } else {
+    navigationStatus.textContent = "Voice guidance is off.";
+  }
+}
+
 function stepInstruction(step) {
   const maneuver = step.maneuver || {};
   const type = maneuver.type || "continue";
@@ -485,6 +597,8 @@ function selectParkingSpot(id, moveMap = false, snapToMap = false) {
   disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
+  mapState.lastSpokenInstructionKey = "";
+  stopVoiceGuidancePlayback();
   clearRouteDetails();
   syncParkingSelection();
   updateNavigationUI();
@@ -619,6 +733,7 @@ function updateNavigationUI() {
 
   navigateButton.textContent = parkingSpot ? "Navigate to selected parking" : "Navigate to selected";
   syncNavigationActivityUI(destination, origin);
+  syncVoiceGuidanceButton();
 
   navigateButton.disabled = !(origin && destination);
 
@@ -674,6 +789,8 @@ function clearSelection() {
   disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
+  mapState.lastSpokenInstructionKey = "";
+  stopVoiceGuidancePlayback();
 
   if (mapState.map) {
     mapState.map.closePopup();
@@ -692,6 +809,8 @@ function stopNavigation() {
   disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
+  mapState.lastSpokenInstructionKey = "";
+  stopVoiceGuidancePlayback();
   clearNavigationGuide();
   updateNavigationUI();
 }
@@ -1080,6 +1199,10 @@ async function fetchTurnByTurnRoute() {
       mapState.map.fitBounds(points, { padding: [32, 32] });
     }
     renderRouteDetails(route);
+    speakNavigationGuidance(route, destination, {
+      force: !mapState.navigationFollowMode,
+      includeSummary: !mapState.navigationFollowMode
+    });
     updateNavigationUI();
   } catch (error) {
     if (requestKey !== buildRouteKey(mapState.currentLocation, selectedNavigationTarget(), mapState.routeMode)) {

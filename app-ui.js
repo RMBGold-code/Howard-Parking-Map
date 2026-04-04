@@ -4,6 +4,8 @@ function selectBuilding(name, moveMap = false, snapToMap = false) {
   disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
+  mapState.lastSpokenInstructionKey = "";
+  stopVoiceGuidancePlayback();
   const building = selectedBuilding();
   renderDetails();
   renderList();
@@ -877,6 +879,7 @@ useLocationButton.addEventListener("click", requestCurrentLocation);
 startingLocationButton.addEventListener("click", chooseStartingLocation);
 navigateButton.addEventListener("click", fetchTurnByTurnRoute);
 stopNavigationButton.addEventListener("click", stopNavigation);
+voiceGuidanceButton?.addEventListener("click", toggleVoiceGuidance);
 clearSelectionButton.addEventListener("click", clearSelection);
 
 window.addEventListener("beforeinstallprompt", (event) => {
