@@ -11,6 +11,25 @@
   <meta name="apple-mobile-web-app-title" content="Howard+DC landmarks">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <script>
+    window.addEventListener("load", () => {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations()
+          .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+          .catch(() => {});
+      }
+
+      if ("caches" in window) {
+        caches.keys()
+          .then((keys) => Promise.all(
+            keys
+              .filter((key) => key.startsWith("howard-landmarks-"))
+              .map((key) => caches.delete(key))
+          ))
+          .catch(() => {});
+      }
+    });
+  </script>
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"

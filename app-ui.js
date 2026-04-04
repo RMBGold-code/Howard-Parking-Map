@@ -757,30 +757,7 @@ async function shareApp() {
 }
 
 function registerServiceWorker() {
-  if (!("serviceWorker" in navigator) || window.location.protocol === "file:") {
-    return;
-  }
-
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=65")
-      .then((registration) => {
-        serviceWorkerRegistration = registration;
-        if ("caches" in window) {
-          caches.keys()
-            .then((keys) => Promise.all(
-              keys
-                .filter((key) => key.startsWith("howard-landmarks-"))
-                .map((key) => caches.delete(key))
-            ))
-            .catch(() => {
-              // Ignore cache cleanup failures.
-            });
-        }
-      })
-      .catch(() => {
-        // Ignore registration failures in unsupported/local contexts.
-      });
-  });
+  return;
 }
 
 legendButtons.forEach((button) => {
