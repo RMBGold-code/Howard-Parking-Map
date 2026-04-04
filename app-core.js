@@ -802,6 +802,59 @@ async function snapPointToNetwork(point, mode) {
   };
 }
 
+async function requestOsrmRoute(origin, destination, mode, options = {}) {
+  const params = new URLSearchParams({
+    overview: options.overview || "full",
+    geometries: "geojson",
+    steps: options.steps === false ? "false" : "true"
+  });
+
+  const coordinates = `${destination ? `${origin.lng},${origin.lat};${destination.lng},${destination.lat}` : ""}`;
+  const response = await fetch(
+    `https://router.project-osrm.org/route/v1/${routeProfile(mode)}/${coordinates}?${params.toString()}`,
+    {
+      headers: {
+        Accept: "application/json"
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Routing failed with status ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const route = payload.routes?.[0];
+  if (!route) {
+    throw new Error(payload.code || "No route returned");
+  }
+
+  return route;
+}
+
+async function resolveDrivingRoute(origin, destination) {
+  const snappedOrigin = await snapPointToNetwork(origin, "driving").catch(() => origin);
+  const snappedDestination = await snapPointToNetwork(destination, "driving").catch(() => destination);
+
+  const attempts = [
+    () => requestOsrmRoute(snappedOrigin, snappedDestination, "driving", { steps: true, overview: "full" }),
+    () => requestOsrmRoute(origin, destination, "driving", { steps: true, overview: "full" }),
+    () => requestOsrmRoute(snappedOrigin, snappedDestination, "driving", { steps: false, overview: "simplified" }),
+    () => requestOsrmRoute(origin, destination, "driving", { steps: false, overview: "simplified" })
+  ];
+
+  let lastError = null;
+  for (const attempt of attempts) {
+    try {
+      return await attempt();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Driving route unavailable");
+}
+
 async function fetchTurnByTurnRoute() {
   const destination = selectedNavigationTarget();
   const origin = mapState.currentLocation;
@@ -818,38 +871,15 @@ async function fetchTurnByTurnRoute() {
   navigationStatus.textContent = `Building a ${mapState.routeMode} route to ${destination.name}...`;
   routeSummary.classList.add("is-hidden");
   routeSteps.classList.add("is-hidden");
-  const params = new URLSearchParams({
-    overview: "full",
-    geometries: "geojson",
-    steps: "true"
-  });
 
   try {
-    const [snappedOrigin, snappedDestination] = await Promise.all([
-      snapPointToNetwork(origin, mapState.routeMode).catch(() => origin),
-      snapPointToNetwork(destination, mapState.routeMode).catch(() => destination)
-    ]);
-
     if (requestKey !== buildRouteKey(mapState.currentLocation, selectedNavigationTarget(), mapState.routeMode)) {
       return;
     }
 
-    const coordinates = `${snappedOrigin.lng},${snappedOrigin.lat};${snappedDestination.lng},${snappedDestination.lat}`;
-    const response = await fetch(`https://router.project-osrm.org/route/v1/${routeProfile(mapState.routeMode)}/${coordinates}?${params.toString()}`, {
-      headers: {
-        Accept: "application/json"
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Routing failed with status ${response.status}`);
-    }
-
-    const payload = await response.json();
-    const route = payload.routes?.[0];
-    if (!route) {
-      throw new Error("No route returned");
-    }
+    const route = mapState.routeMode === "driving"
+      ? await resolveDrivingRoute(origin, destination)
+      : await requestOsrmRoute(origin, destination, mapState.routeMode, { steps: true, overview: "full" });
 
     if (requestKey !== buildRouteKey(mapState.currentLocation, selectedNavigationTarget(), mapState.routeMode)) {
       return;
@@ -878,13 +908,14 @@ async function fetchTurnByTurnRoute() {
     mapState.map.fitBounds(points, { padding: [32, 32] });
     renderRouteDetails(route);
     updateNavigationUI();
-  } catch {
+  } catch (error) {
     if (requestKey !== buildRouteKey(mapState.currentLocation, selectedNavigationTarget(), mapState.routeMode)) {
       return;
     }
     mapState.routeData = null;
     mapState.routeKey = "";
-    mapState.navigationFallbackMessage = `${routeModeLabel(mapState.routeMode)} turn-by-turn routing is unavailable right now for ${destination.name}, so this is an estimate based on ${routeModeBasisLabel(mapState.routeMode)}.`;
+    const reason = error?.message ? ` (${error.message})` : "";
+    mapState.navigationFallbackMessage = `${routeModeLabel(mapState.routeMode)} turn-by-turn routing is unavailable right now for ${destination.name}, so this is an estimate based on ${routeModeBasisLabel(mapState.routeMode)}${reason}.`;
     navigationStatus.textContent = mapState.navigationFallbackMessage;
     renderEstimatedRouteDetails(origin, destination);
     drawNavigationGuide({ fitBounds: true });
