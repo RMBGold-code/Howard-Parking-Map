@@ -685,6 +685,10 @@ body {
   display: none;
 }
 
+.app-map-nav-banner {
+  display: none;
+}
+
 .nav-active-title {
   font: 800 0.92rem/1.2 "Bahnschrift SemiCondensed", "Arial Narrow", sans-serif;
   letter-spacing: 0.04em;
@@ -1065,6 +1069,23 @@ body {
 }
 
 .is-installed-app .nav-card {
+  display: none;
+}
+
+.is-installed-app #navigationActiveBanner {
+  display: none;
+}
+
+.is-installed-app .app-map-nav-banner {
+  display: grid;
+  margin-top: 12px;
+}
+
+.is-installed-app .app-map-nav-banner.is-hidden {
+  display: none;
+}
+
+.is-installed-app .tile-note {
   display: none;
 }
 

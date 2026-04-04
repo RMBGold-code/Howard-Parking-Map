@@ -25,6 +25,7 @@ const stopNavigationButton = document.getElementById("stopNavigationButton");
 const voiceGuidanceButton = document.getElementById("voiceGuidanceButton");
 const clearSelectionButton = document.getElementById("clearSelectionButton");
 const navigationActiveBanner = document.getElementById("navigationActiveBanner");
+const appMapNavigationBanner = document.getElementById("appMapNavigationBanner");
 const navigationStatus = document.getElementById("navigationStatus");
 const navigationLink = document.getElementById("navigationLink");
 const routeSummary = document.getElementById("routeSummary");
@@ -344,21 +345,25 @@ function syncNavigationActivityUI(destination = selectedNavigationTarget(), orig
     stopNavigationButton.disabled = !active;
   }
 
-  if (!navigationActiveBanner) {
-    return;
-  }
-
-  if (!active) {
-    navigationActiveBanner.textContent = "";
-    navigationActiveBanner.classList.add("is-hidden");
-    return;
-  }
-
-  navigationActiveBanner.innerHTML = `
+  const bannerMarkup = `
     <strong class="nav-active-title">${routeModeLabel(mapState.routeMode)} navigation active</strong>
     <span class="nav-active-copy">${mapState.navigationFollowMode ? "Follow mode is tracking your movement to" : "Following directions to"} ${escapeHtml(destination.name)}.</span>
   `;
-  navigationActiveBanner.classList.remove("is-hidden");
+
+  [navigationActiveBanner, appMapNavigationBanner].forEach((banner) => {
+    if (!banner) {
+      return;
+    }
+
+    if (!active) {
+      banner.textContent = "";
+      banner.classList.add("is-hidden");
+      return;
+    }
+
+    banner.innerHTML = bannerMarkup;
+    banner.classList.remove("is-hidden");
+  });
 }
 
 function canUseVoiceGuidance() {
