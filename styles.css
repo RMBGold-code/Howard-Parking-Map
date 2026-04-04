@@ -668,24 +668,6 @@ body {
   margin-top: 12px;
 }
 
-.correction-card {
-  margin-top: 18px;
-  padding: 18px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(214, 231, 255, 0.9), rgba(236, 244, 255, 0.96));
-  border: 1px solid rgba(19, 63, 120, 0.12);
-}
-
-.correction-copy {
-  margin: 0 0 14px;
-  color: #31537d;
-  line-height: 1.55;
-}
-
-.correction-actions {
-  grid-template-columns: 1fr;
-}
-
 .nav-active-banner {
   display: grid;
   gap: 4px;

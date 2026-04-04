@@ -1,8 +1,4 @@
 function selectBuilding(name, moveMap = false, snapToMap = false) {
-  if (correctionModeActive && correctionTargetName && correctionTargetName !== name) {
-    cancelCorrectionMode();
-  }
-
   selectedBuildingName = name;
   mapState.selectedParkingId = "";
   mapState.navigationActive = false;
@@ -823,9 +819,6 @@ useLocationButton.addEventListener("click", requestCurrentLocation);
 navigateButton.addEventListener("click", fetchTurnByTurnRoute);
 stopNavigationButton.addEventListener("click", stopNavigation);
 clearSelectionButton.addEventListener("click", clearSelection);
-markCorrectionButton.addEventListener("click", beginCorrectionMode);
-clearCorrectionButton.addEventListener("click", clearSelectedCorrection);
-copyCorrectionDataButton.addEventListener("click", copyCorrectionData);
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
@@ -840,13 +833,11 @@ window.addEventListener("appinstalled", () => {
   setAppActionStatus("Howard+DC landmarks was installed.");
 });
 
-applySavedCorrections();
 renderDetails();
 renderList();
 setRouteMode("walking");
 updateNavigationUI();
 syncClearSelectionButton();
-syncCorrectionButtons();
 syncInstalledAppState();
 updateInstallButtonVisibility();
 updateInstallHelpUI();
