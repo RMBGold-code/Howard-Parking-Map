@@ -731,6 +731,19 @@ body {
   padding-inline: 14px;
 }
 
+.nav-mode-static {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(16, 59, 77, 0.1);
+  border: 1px solid rgba(16, 59, 77, 0.16);
+  color: #173556;
+  font: 700 0.95rem/1.2 Aptos, "Segoe UI", sans-serif;
+}
+
 .nav-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

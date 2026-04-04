@@ -56,7 +56,7 @@ const mapState = {
   navigationLine: null,
   navigationActive: false,
   navigationFallbackMessage: "",
-  routeMode: "walking",
+  routeMode: "driving",
   routeData: null,
   routeKey: ""
 };

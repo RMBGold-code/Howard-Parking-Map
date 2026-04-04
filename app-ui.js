@@ -892,7 +892,7 @@ window.addEventListener("appinstalled", () => {
 
 renderDetails();
 renderList();
-setRouteMode("walking");
+setRouteMode("driving");
 updateNavigationUI();
 syncClearSelectionButton();
 syncInstalledAppState();
