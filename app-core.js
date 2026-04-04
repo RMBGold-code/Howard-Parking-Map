@@ -58,8 +58,24 @@ const mapState = {
   navigationFallbackMessage: "",
   routeMode: "driving",
   routeData: null,
-  routeKey: ""
+  routeKey: "",
+  routeRequestKeyPending: "",
+  lastRouteRequestAt: 0
 };
+
+const DRIVING_ROUTE_SERVICES = [
+  {
+    name: "routing.openstreetmap.de",
+    routeBase: "https://routing.openstreetmap.de/routed-car/route/v1/driving"
+  },
+  {
+    name: "router.project-osrm.org",
+    routeBase: "https://router.project-osrm.org/route/v1/driving"
+  }
+];
+
+const ROUTE_REQUEST_TIMEOUT_MS = 12000;
+const ROUTE_REQUEST_SPACING_MS = 1100;
 
 let activeFilter = "all";
 let selectedBuildingName = "";
@@ -765,83 +781,86 @@ function drawNavigationGuide(options = {}) {
   updateNavigationUI();
 }
 
-async function snapPointToNetwork(point, mode) {
-  const normalized = normalizePoint(point?.lat, point?.lng);
-  if (!normalized) {
-    return null;
-  }
-
-  const params = new URLSearchParams({
-    number: "1"
-  });
-
-  const response = await fetch(
-    `https://router.project-osrm.org/nearest/v1/${routeProfile(mode)}/${normalized.lng},${normalized.lat}?${params.toString()}`,
-    {
-      headers: {
-        Accept: "application/json"
-      }
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Nearest-point lookup failed with status ${response.status}`);
-  }
-
-  const payload = await response.json();
-  const waypoint = payload.waypoints?.[0];
-  const location = waypoint?.location;
-
-  if (!Array.isArray(location) || location.length < 2) {
-    return normalized;
-  }
-
-  return {
-    lat: Number(location[1]),
-    lng: Number(location[0])
-  };
+function sleep(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
-async function requestOsrmRoute(origin, destination, mode, options = {}) {
+async function waitForRoutingWindow() {
+  const elapsed = Date.now() - mapState.lastRouteRequestAt;
+  if (elapsed < ROUTE_REQUEST_SPACING_MS) {
+    await sleep(ROUTE_REQUEST_SPACING_MS - elapsed);
+  }
+  mapState.lastRouteRequestAt = Date.now();
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = ROUTE_REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      cache: "no-store",
+      mode: "cors",
+      signal: controller.signal
+    });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+async function requestDrivingRouteFromService(origin, destination, service, options = {}) {
   const params = new URLSearchParams({
-    overview: options.overview || "full",
+    overview: options.overview || "simplified",
     geometries: "geojson",
-    steps: options.steps === false ? "false" : "true"
+    steps: options.steps === false ? "false" : "true",
+    alternatives: "false"
   });
 
-  const coordinates = `${destination ? `${origin.lng},${origin.lat};${destination.lng},${destination.lat}` : ""}`;
-  const response = await fetch(
-    `https://router.project-osrm.org/route/v1/${routeProfile(mode)}/${coordinates}?${params.toString()}`,
-    {
-      headers: {
-        Accept: "application/json"
+  const normalizedOrigin = normalizePoint(origin?.lat, origin?.lng);
+  const normalizedDestination = normalizePoint(destination?.lat, destination?.lng);
+  if (!normalizedOrigin || !normalizedDestination) {
+    throw new Error("Route points were invalid");
+  }
+
+  const coordinates = `${normalizedOrigin.lng},${normalizedOrigin.lat};${normalizedDestination.lng},${normalizedDestination.lat}`;
+  await waitForRoutingWindow();
+
+  let response;
+  try {
+    response = await fetchWithTimeout(
+      `${service.routeBase}/${coordinates}?${params.toString()}`,
+      {
+        headers: {
+          Accept: "application/json"
+        }
       }
+    );
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(`${service.name} timed out`);
     }
-  );
+    throw new Error(`${service.name} could not be reached`);
+  }
 
   if (!response.ok) {
-    throw new Error(`Routing failed with status ${response.status}`);
+    throw new Error(`${service.name} returned status ${response.status}`);
   }
 
   const payload = await response.json();
   const route = payload.routes?.[0];
-  if (!route) {
-    throw new Error(payload.code || "No route returned");
+  if (!route?.geometry?.coordinates?.length) {
+    throw new Error(`${service.name} returned no route geometry`);
   }
 
   return route;
 }
 
 async function resolveDrivingRoute(origin, destination) {
-  const snappedOrigin = await snapPointToNetwork(origin, "driving").catch(() => origin);
-  const snappedDestination = await snapPointToNetwork(destination, "driving").catch(() => destination);
-
-  const attempts = [
-    () => requestOsrmRoute(snappedOrigin, snappedDestination, "driving", { steps: true, overview: "full" }),
-    () => requestOsrmRoute(origin, destination, "driving", { steps: true, overview: "full" }),
-    () => requestOsrmRoute(snappedOrigin, snappedDestination, "driving", { steps: false, overview: "simplified" }),
-    () => requestOsrmRoute(origin, destination, "driving", { steps: false, overview: "simplified" })
-  ];
+  const attempts = DRIVING_ROUTE_SERVICES.flatMap((service) => ([
+    () => requestDrivingRouteFromService(origin, destination, service, { steps: true, overview: "simplified" }),
+    () => requestDrivingRouteFromService(origin, destination, service, { steps: false, overview: "simplified" })
+  ]));
 
   let lastError = null;
   for (const attempt of attempts) {
@@ -867,6 +886,16 @@ async function fetchTurnByTurnRoute() {
   mapState.navigationActive = true;
   mapState.navigationFallbackMessage = "";
   const requestKey = buildRouteKey(origin, destination, mapState.routeMode);
+  if (mapState.routeData && mapState.routeKey === requestKey) {
+    updateNavigationUI();
+    return;
+  }
+
+  if (mapState.routeRequestKeyPending === requestKey) {
+    return;
+  }
+
+  mapState.routeRequestKeyPending = requestKey;
   syncNavigationActivityUI(destination, origin);
   navigationStatus.textContent = `Building a ${mapState.routeMode} route to ${destination.name}...`;
   routeSummary.classList.add("is-hidden");
@@ -877,9 +906,7 @@ async function fetchTurnByTurnRoute() {
       return;
     }
 
-    const route = mapState.routeMode === "driving"
-      ? await resolveDrivingRoute(origin, destination)
-      : await requestOsrmRoute(origin, destination, mapState.routeMode, { steps: true, overview: "full" });
+    const route = await resolveDrivingRoute(origin, destination);
 
     if (requestKey !== buildRouteKey(mapState.currentLocation, selectedNavigationTarget(), mapState.routeMode)) {
       return;
@@ -919,6 +946,10 @@ async function fetchTurnByTurnRoute() {
     navigationStatus.textContent = mapState.navigationFallbackMessage;
     renderEstimatedRouteDetails(origin, destination);
     drawNavigationGuide({ fitBounds: true });
+  } finally {
+    if (mapState.routeRequestKeyPending === requestKey) {
+      mapState.routeRequestKeyPending = "";
+    }
   }
 }
 
