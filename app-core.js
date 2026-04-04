@@ -26,7 +26,6 @@ const clearSelectionButton = document.getElementById("clearSelectionButton");
 const navigationActiveBanner = document.getElementById("navigationActiveBanner");
 const navigationStatus = document.getElementById("navigationStatus");
 const navigationLink = document.getElementById("navigationLink");
-const routeComparison = document.getElementById("routeComparison");
 const routeSummary = document.getElementById("routeSummary");
 const routeSteps = document.getElementById("routeSteps");
 const routeModeButtons = [...document.querySelectorAll("[data-route-mode]")];
@@ -59,11 +58,7 @@ const mapState = {
   navigationFallbackMessage: "",
   routeMode: "walking",
   routeData: null,
-  routeKey: "",
-  routeResults: {
-    walking: null,
-    driving: null
-  }
+  routeKey: ""
 };
 
 let activeFilter = "all";
@@ -267,70 +262,6 @@ function renderEstimatedRouteDetails(origin, destination) {
     </div>
   `;
   routeSteps.classList.remove("is-hidden");
-}
-
-function clearRouteResults() {
-  mapState.routeResults.walking = null;
-  mapState.routeResults.driving = null;
-}
-
-function currentRouteResult(mode) {
-  const result = mapState.routeResults[mode];
-  const destination = selectedNavigationTarget();
-  const origin = mapState.currentLocation;
-  const key = buildRouteKey(origin, destination, mode);
-
-  if (!result || !destination || !origin || result.key !== key) {
-    return null;
-  }
-
-  return result;
-}
-
-function renderRouteComparison() {
-  const destination = selectedNavigationTarget();
-  const origin = mapState.currentLocation;
-
-  if (!routeComparison) {
-    return;
-  }
-
-  if (!destination || !origin) {
-    routeComparison.innerHTML = "";
-    routeComparison.classList.add("is-hidden");
-    return;
-  }
-
-  const directMiles = distanceMiles(origin, destination);
-  const modes = ["walking", "driving"];
-
-  routeComparison.innerHTML = modes.map((mode) => {
-    const result = currentRouteResult(mode);
-    const activeClass = mode === mapState.routeMode ? "is-active" : "";
-    const label = routeModeLabel(mode);
-
-    if (result?.route) {
-      const durationMinutes = result.route.duration / 60;
-      return `
-        <div class="route-compare-row ${activeClass}">
-          <p class="route-compare-title">${label}</p>
-          <div class="route-compare-meta">${formatDistanceMiles(result.route.distance)} • about ${formatDuration(durationMinutes)}</div>
-        </div>
-      `;
-    }
-
-    const estimatedMiles = estimatedTravelDistanceMiles(directMiles, mode);
-    const estimatedMinutes = estimatedTravelMinutes(directMiles, mode);
-    return `
-      <div class="route-compare-row ${activeClass}">
-        <p class="route-compare-title">${label}</p>
-        <div class="route-compare-meta">${estimatedMiles.toFixed(2)} mi • about ${formatDuration(estimatedMinutes)}</div>
-        <div class="route-compare-meta">Estimate based on ${routeModeBasisLabel(mode)}.</div>
-      </div>
-    `;
-  }).join("");
-
-  routeComparison.classList.remove("is-hidden");
 }
 
 function directionsUrl(origin, destination) {
@@ -621,7 +552,6 @@ function setRouteMode(mode) {
   });
 
   clearRouteDetails();
-  renderRouteComparison();
 
   if (mapState.currentLocation && selectedNavigationTarget()) {
     fetchTurnByTurnRoute();
@@ -633,17 +563,14 @@ function setRouteMode(mode) {
 function clearNavigationGuide() {
   mapState.routeData = null;
   mapState.routeKey = "";
-  clearRouteResults();
   if (!mapState.map || !mapState.navigationLine) {
     clearRouteDetails();
-    renderRouteComparison();
     return;
   }
 
   mapState.map.removeLayer(mapState.navigationLine);
   mapState.navigationLine = null;
   clearRouteDetails();
-  renderRouteComparison();
 }
 
 function renderRouteDetails(route) {
@@ -697,8 +624,6 @@ function updateNavigationUI() {
     clearNavigationGuide();
     return;
   }
-
-  renderRouteComparison();
 
   if (mapState.routeData && mapState.routeKey === currentRouteKey) {
     navigationStatus.textContent = `${routeModeLabel(mapState.routeMode)} directions are ready for ${destination.name}.`;
@@ -904,14 +829,9 @@ async function fetchTurnByTurnRoute() {
 
     mapState.routeData = route;
     mapState.routeKey = requestKey;
-    mapState.routeResults[mapState.routeMode] = {
-      key: requestKey,
-      route
-    };
     mapState.navigationFallbackMessage = "";
     mapState.map.fitBounds(points, { padding: [32, 32] });
     renderRouteDetails(route);
-    renderRouteComparison();
     updateNavigationUI();
   } catch {
     if (requestKey !== buildRouteKey(mapState.currentLocation, selectedNavigationTarget(), mapState.routeMode)) {
@@ -919,14 +839,9 @@ async function fetchTurnByTurnRoute() {
     }
     mapState.routeData = null;
     mapState.routeKey = "";
-    mapState.routeResults[mapState.routeMode] = {
-      key: requestKey,
-      route: null
-    };
     mapState.navigationFallbackMessage = `${routeModeLabel(mapState.routeMode)} turn-by-turn routing is unavailable right now for ${destination.name}, so this is an estimate based on ${routeModeBasisLabel(mapState.routeMode)}.`;
     navigationStatus.textContent = mapState.navigationFallbackMessage;
     renderEstimatedRouteDetails(origin, destination);
-    renderRouteComparison();
     drawNavigationGuide({ fitBounds: true });
   }
 }
