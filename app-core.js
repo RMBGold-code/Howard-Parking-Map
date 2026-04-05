@@ -866,7 +866,6 @@ function disableNavigationFollowMode() {
   mapState.navigationFollowMode = false;
   mapState.lastRouteRefreshAt = 0;
   mapState.lastRouteRefreshPoint = null;
-  stopLocationWatch();
 }
 
 function syncFollowViewport() {
@@ -893,11 +892,15 @@ function syncFollowViewport() {
 }
 
 function maybeRefreshFollowRoute(previousLocation, nextLocation) {
-  if (!mapState.navigationFollowMode || !mapState.navigationActive || !selectedNavigationTarget()) {
+  if (!mapState.navigationActive || !selectedNavigationTarget()) {
     return;
   }
 
-  syncFollowViewport();
+  if (mapState.navigationFollowMode) {
+    syncFollowViewport();
+  } else {
+    return;
+  }
 
   if (!nextLocation) {
     return;
@@ -912,7 +915,7 @@ function maybeRefreshFollowRoute(previousLocation, nextLocation) {
   }
 }
 
-function startNavigationLocationWatch() {
+function startLiveLocationWatch() {
   if (!("geolocation" in navigator) || mapState.geolocationWatchId !== null) {
     return;
   }
@@ -924,13 +927,15 @@ function startNavigationLocationWatch() {
         : null;
       const { latitude, longitude, accuracy } = position.coords;
       setCurrentLocation(latitude, longitude, accuracy, {
-        preserveNavigation: true,
-        followMap: true
+        preserveNavigation: mapState.navigationActive,
+        followMap: mapState.navigationFollowMode
       });
       maybeRefreshFollowRoute(previousLocation, mapState.currentLocation);
     },
     () => {
-      navigationStatus.textContent = "Follow mode is on, but live movement updates are unavailable right now.";
+      navigationStatus.textContent = mapState.navigationFollowMode
+        ? "Follow mode is on, but live movement updates are unavailable right now."
+        : "Live location tracking is unavailable right now.";
     },
     {
       enableHighAccuracy: true,
@@ -953,7 +958,7 @@ function activateNavigationFollowMode() {
     ? { ...mapState.currentLocation }
     : null;
   syncFollowViewport();
-  startNavigationLocationWatch();
+  startLiveLocationWatch();
   updateNavigationUI();
 }
 
@@ -1272,15 +1277,16 @@ function requestCurrentLocation() {
     (position) => {
       const { latitude, longitude, accuracy } = position.coords;
       setCurrentLocation(latitude, longitude, accuracy);
+      startLiveLocationWatch();
       const accuracyText = accuracy ? ` Accuracy about ${Math.round(accuracy)} meters.` : "";
 
       const destination = selectedNavigationTarget();
       if (destination) {
         clearRouteDetails();
-        navigationStatus.textContent = `Location updated.${accuracyText} Select Navigate to selected to build a ${mapState.routeMode} route to ${destination.name}.`;
+        navigationStatus.textContent = `Location updated.${accuracyText} Live tracking is on. Select Navigate to selected to build a ${mapState.routeMode} route to ${destination.name}.`;
         updateNavigationUI();
       } else if (mapState.map) {
-        navigationStatus.textContent = `Location updated.${accuracyText} Select a destination to navigate.`;
+        navigationStatus.textContent = `Location updated.${accuracyText} Live tracking is on. Select a destination to navigate.`;
         mapState.map.flyTo([latitude, longitude], Math.max(mapState.map.getZoom(), 16), {
           duration: 0.7
         });
