@@ -719,6 +719,77 @@ body {
   position: relative;
 }
 
+.map-turn-banner {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 650;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px 12px;
+  width: min(360px, calc(100% - 96px));
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 43, 71, 0.16);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 16px 34px rgba(16, 35, 30, 0.18);
+  backdrop-filter: blur(10px);
+  animation: detailFadeIn 180ms ease;
+}
+
+.map-turn-banner.is-hidden {
+  display: none;
+}
+
+.map-turn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(16, 59, 77, 0.98), rgba(19, 63, 120, 0.96));
+  color: #f6fbff;
+  font: 900 1.45rem/1 "Segoe UI Symbol", "Arial Unicode MS", sans-serif;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.map-turn-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.map-turn-label {
+  margin: 0;
+  color: #8a5a18;
+  font: 700 0.72rem/1.2 "Bahnschrift SemiCondensed", "Arial Narrow", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.map-turn-road {
+  margin: 0;
+  color: #103b4d;
+  font: 800 1rem/1.2 "Bahnschrift SemiCondensed", "Arial Narrow", sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.map-turn-instruction {
+  margin: 0;
+  color: #445c70;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.map-turn-meta {
+  margin: 0;
+  color: #6d7f90;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
 .app-map-controls {
   display: none;
 }
@@ -1348,5 +1419,18 @@ a {
 
   .leaflet-map {
     min-height: 520px;
+  }
+
+  .map-turn-banner {
+    top: 12px;
+    left: 12px;
+    width: min(320px, calc(100% - 84px));
+    padding: 11px 12px;
+  }
+
+  .map-turn-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 1.3rem;
   }
 }

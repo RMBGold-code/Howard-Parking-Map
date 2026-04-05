@@ -26,6 +26,7 @@ const voiceGuidanceButton = document.getElementById("voiceGuidanceButton");
 const clearSelectionButton = document.getElementById("clearSelectionButton");
 const navigationActiveBanner = document.getElementById("navigationActiveBanner");
 const appMapNavigationBanner = document.getElementById("appMapNavigationBanner");
+const mapTurnBanner = document.getElementById("mapTurnBanner");
 const navigationStatus = document.getElementById("navigationStatus");
 const navigationLink = document.getElementById("navigationLink");
 const routeSummary = document.getElementById("routeSummary");
@@ -340,6 +341,112 @@ function formatDuration(minutes) {
   return remaining ? `${hours} hr ${remaining} min` : `${hours} hr`;
 }
 
+function currentGuidanceStep(route = mapState.routeData) {
+  const steps = routeLegSteps(route);
+  if (!steps.length) {
+    return null;
+  }
+
+  const index = Math.max(0, Math.min(mapState.activeGuidanceStepIndex, steps.length - 1));
+  return {
+    step: steps[index],
+    index,
+    total: steps.length
+  };
+}
+
+function turnArrowGlyph(step) {
+  const type = step?.maneuver?.type || "continue";
+  const modifier = step?.maneuver?.modifier || "";
+
+  if (type === "arrive") {
+    return "◎";
+  }
+
+  if (type === "roundabout") {
+    return "↺";
+  }
+
+  if (modifier === "uturn" || modifier === "sharp left") {
+    return "↰";
+  }
+
+  if (modifier === "slight left") {
+    return "↖";
+  }
+
+  if (modifier === "left") {
+    return "←";
+  }
+
+  if (modifier === "uturn right" || modifier === "sharp right") {
+    return "↱";
+  }
+
+  if (modifier === "slight right") {
+    return "↗";
+  }
+
+  if (modifier === "right") {
+    return "→";
+  }
+
+  return "↑";
+}
+
+function turnBannerStreet(step, destination) {
+  const street = [step?.name, step?.ref]
+    .find((value) => typeof value === "string" && value.trim());
+
+  if (street) {
+    return street.trim();
+  }
+
+  if (step?.maneuver?.type === "arrive") {
+    return destination?.name || "Destination";
+  }
+
+  return "Current route";
+}
+
+function syncMapTurnBanner(destination = selectedNavigationTarget(), origin = mapState.currentLocation) {
+  if (!mapTurnBanner) {
+    return;
+  }
+
+  const active = Boolean(mapState.navigationActive && origin && destination && mapState.routeData);
+  if (!active) {
+    mapTurnBanner.innerHTML = "";
+    mapTurnBanner.classList.add("is-hidden");
+    return;
+  }
+
+  const guidance = currentGuidanceStep(mapState.routeData);
+  if (!guidance?.step) {
+    mapTurnBanner.innerHTML = "";
+    mapTurnBanner.classList.add("is-hidden");
+    return;
+  }
+
+  const { step, index, total } = guidance;
+  const instruction = stepInstruction(step);
+  const street = turnBannerStreet(step, destination);
+  const distanceText = step.maneuver?.type === "arrive"
+    ? "Destination ahead"
+    : `In ${formatDistanceMiles(step.distance)}`;
+
+  mapTurnBanner.innerHTML = `
+    <span class="map-turn-icon" aria-hidden="true">${turnArrowGlyph(step)}</span>
+    <div class="map-turn-copy">
+      <p class="map-turn-label">Next turn ${index + 1} of ${total}</p>
+      <p class="map-turn-road">${escapeHtml(street)}</p>
+      <p class="map-turn-instruction">${escapeHtml(instruction)}</p>
+      <p class="map-turn-meta">${escapeHtml(distanceText)}</p>
+    </div>
+  `;
+  mapTurnBanner.classList.remove("is-hidden");
+}
+
 function syncNavigationActivityUI(destination = selectedNavigationTarget(), origin = mapState.currentLocation) {
   const active = Boolean(mapState.navigationActive && origin && destination);
 
@@ -366,6 +473,8 @@ function syncNavigationActivityUI(destination = selectedNavigationTarget(), orig
     banner.innerHTML = bannerMarkup;
     banner.classList.remove("is-hidden");
   });
+
+  syncMapTurnBanner(destination, origin);
 }
 
 function canUseVoiceGuidance() {
