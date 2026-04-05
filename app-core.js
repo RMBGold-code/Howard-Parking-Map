@@ -72,7 +72,9 @@ const mapState = {
   lastRouteRefreshPoint: null,
   lastUserMarkerTapAt: 0,
   voiceGuidanceEnabled: false,
-  lastSpokenInstructionKey: ""
+  lastSpokenInstructionKey: "",
+  activeGuidanceStepIndex: -1,
+  lastGuidanceAdvanceAt: 0
 };
 
 const DRIVING_ROUTE_SERVICES = [
@@ -433,37 +435,107 @@ function syncVoiceGuidanceButton() {
   }
 }
 
+function routeLegSteps(route) {
+  return route.legs
+    .flatMap((leg) => leg.steps || [])
+    .filter((step) => step.distance > 0 || (step.maneuver && step.maneuver.type === "arrive"));
+}
+
+function routeStepLocation(step) {
+  const location = step?.maneuver?.location;
+  if (!Array.isArray(location) || location.length < 2) {
+    return null;
+  }
+
+  return normalizePoint(location[1], location[0]);
+}
+
+function guidanceAdvanceThresholdMiles(step) {
+  const stepMiles = (step?.distance || 0) / 1609.344;
+  return Math.max(0.03, Math.min(0.09, (stepMiles * 0.25) + 0.02));
+}
+
 function speakNavigationGuidance(route, destination, options = {}) {
   if (!mapState.voiceGuidanceEnabled || !canUseVoiceGuidance() || !route) {
     return;
   }
 
-  const steps = route.legs.flatMap((leg) => leg.steps || []).filter((step) => step.distance > 0);
+  const steps = routeLegSteps(route);
   if (!steps.length) {
     return;
   }
 
-  const nextStep = steps[0];
+  const targetStepIndex = Math.max(0, Math.min(options.stepIndex ?? 0, steps.length - 1));
+  const nextStep = steps[targetStepIndex];
   const nextInstruction = stepInstruction(nextStep);
-  const instructionKey = `${destination?.name || ""}|${nextInstruction}|${Math.round(nextStep.distance)}`;
+  const instructionKey = `${destination?.name || ""}|${targetStepIndex}|${nextInstruction}|${Math.round(nextStep.distance)}`;
   if (!options.force && mapState.lastSpokenInstructionKey === instructionKey) {
     return;
   }
 
+  mapState.activeGuidanceStepIndex = targetStepIndex;
   mapState.lastSpokenInstructionKey = instructionKey;
+  mapState.lastGuidanceAdvanceAt = Date.now();
   stopVoiceGuidancePlayback();
 
   const parts = [];
   if (options.includeSummary !== false) {
     parts.push(`Driving route ready for ${destination.name}. ${formatDistanceMiles(route.distance)} total, about ${formatDuration(route.duration / 60)}.`);
   }
-  parts.push(`Next step: ${nextInstruction}. Continue for ${formatDistanceMiles(nextStep.distance)}.`);
+  if (nextStep.maneuver?.type === "arrive") {
+    parts.push("You have arrived at your destination.");
+  } else {
+    parts.push(`Next step: ${nextInstruction}. Continue for ${formatDistanceMiles(nextStep.distance)}.`);
+  }
 
   const utterance = new SpeechSynthesisUtterance(parts.join(" "));
   utterance.rate = 1;
   utterance.pitch = 1;
   utterance.volume = 1;
   window.speechSynthesis.speak(utterance);
+}
+
+function maybeAdvanceVoiceGuidance(currentLocation) {
+  if (!mapState.voiceGuidanceEnabled || !mapState.navigationActive || !mapState.routeData || !currentLocation) {
+    return;
+  }
+
+  const destination = selectedNavigationTarget();
+  if (!destination) {
+    return;
+  }
+
+  const steps = routeLegSteps(mapState.routeData);
+  if (!steps.length) {
+    return;
+  }
+
+  const currentIndex = Math.max(0, mapState.activeGuidanceStepIndex);
+  if (currentIndex >= steps.length - 1) {
+    return;
+  }
+
+  if ((Date.now() - mapState.lastGuidanceAdvanceAt) < 5000) {
+    return;
+  }
+
+  const currentStep = steps[currentIndex];
+  const currentStepPoint = routeStepLocation(currentStep);
+  if (!currentStepPoint) {
+    return;
+  }
+
+  const distanceToCurrentStep = distanceMiles(currentLocation, currentStepPoint);
+  const thresholdMiles = guidanceAdvanceThresholdMiles(currentStep);
+  if (distanceToCurrentStep > thresholdMiles) {
+    return;
+  }
+
+  speakNavigationGuidance(mapState.routeData, destination, {
+    force: true,
+    includeSummary: false,
+    stepIndex: currentIndex + 1
+  });
 }
 
 function toggleVoiceGuidance() {
@@ -476,6 +548,8 @@ function toggleVoiceGuidance() {
   mapState.voiceGuidanceEnabled = !mapState.voiceGuidanceEnabled;
   if (!mapState.voiceGuidanceEnabled) {
     mapState.lastSpokenInstructionKey = "";
+    mapState.activeGuidanceStepIndex = -1;
+    mapState.lastGuidanceAdvanceAt = 0;
     stopVoiceGuidancePlayback();
   }
 
@@ -544,6 +618,8 @@ function stepInstruction(step) {
 function clearRouteDetails() {
   mapState.routeData = null;
   mapState.routeKey = "";
+  mapState.activeGuidanceStepIndex = -1;
+  mapState.lastGuidanceAdvanceAt = 0;
   routeSummary.classList.add("is-hidden");
   routeSummary.textContent = "";
   routeSteps.classList.add("is-hidden");
@@ -848,6 +924,8 @@ function stopNavigation() {
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
   mapState.lastSpokenInstructionKey = "";
+  mapState.activeGuidanceStepIndex = -1;
+  mapState.lastGuidanceAdvanceAt = 0;
   stopVoiceGuidancePlayback();
   clearNavigationGuide();
   updateNavigationUI();
@@ -1059,6 +1137,7 @@ function setCurrentLocation(lat, lng, accuracy = 0, options = {}) {
     syncFollowViewport();
   }
 
+  maybeAdvanceVoiceGuidance(mapState.currentLocation);
   updateNavigationUI();
 }
 
@@ -1242,6 +1321,8 @@ async function fetchTurnByTurnRoute() {
       mapState.map.fitBounds(points, { padding: [32, 32] });
     }
     renderRouteDetails(route);
+    mapState.activeGuidanceStepIndex = 0;
+    mapState.lastGuidanceAdvanceAt = 0;
     speakNavigationGuidance(route, destination, {
       force: !mapState.navigationFollowMode,
       includeSummary: !mapState.navigationFollowMode
