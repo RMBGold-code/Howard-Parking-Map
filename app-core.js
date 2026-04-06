@@ -89,7 +89,8 @@ const DRIVING_ROUTE_SERVICES = [
   }
 ];
 
-const ROUTE_REQUEST_SPACING_MS = 1100;
+const ROUTE_REQUEST_SPACING_MS = 250;
+const ROUTE_REQUEST_TIMEOUT_MS = 4500;
 const FOLLOW_NAVIGATION_ZOOM = 19;
 const FOLLOW_ROUTE_REFRESH_MS = 9000;
 const FOLLOW_ROUTE_REFRESH_MILES = 0.03;
@@ -1316,17 +1317,30 @@ async function requestDrivingRouteFromService(origin, destination, service, opti
   }
 
   const coordinates = `${normalizedOrigin.lng},${normalizedOrigin.lat};${normalizedDestination.lng},${normalizedDestination.lat}`;
-  await waitForRoutingWindow();
+  const controller = typeof AbortController !== "undefined"
+    ? new AbortController()
+    : null;
+  const timeoutId = controller
+    ? window.setTimeout(() => controller.abort(), ROUTE_REQUEST_TIMEOUT_MS)
+    : 0;
 
   let response;
   try {
     response = await fetch(`${service.routeBase}/${coordinates}?${params.toString()}`, {
       headers: {
         Accept: "application/json"
-      }
+      },
+      signal: controller?.signal
     });
   } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(`${service.name} timed out`);
+    }
     throw new Error(`${service.name} could not be reached`);
+  } finally {
+    if (timeoutId) {
+      window.clearTimeout(timeoutId);
+    }
   }
 
   if (!response.ok) {
@@ -1342,18 +1356,42 @@ async function requestDrivingRouteFromService(origin, destination, service, opti
   return route;
 }
 
+async function requestDrivingRouteBatch(origin, destination, options = {}) {
+  await waitForRoutingWindow();
+
+  const attempts = DRIVING_ROUTE_SERVICES.map((service) => (
+    requestDrivingRouteFromService(origin, destination, service, options)
+  ));
+
+  try {
+    if (typeof Promise.any === "function") {
+      return await Promise.any(attempts);
+    }
+
+    const settled = await Promise.allSettled(attempts);
+    const match = settled.find((result) => result.status === "fulfilled");
+    if (match) {
+      return match.value;
+    }
+
+    throw settled.find((result) => result.status === "rejected")?.reason
+      || new Error("Driving route unavailable");
+  } catch (error) {
+    const failure = error?.errors?.find(Boolean) || error;
+    throw failure || new Error("Driving route unavailable");
+  }
+}
+
 async function resolveDrivingRoute(origin, destination) {
-  const attempts = DRIVING_ROUTE_SERVICES.flatMap((service) => ([
-    () => requestDrivingRouteFromService(origin, destination, service, { steps: true, overview: "full" }),
-    () => requestDrivingRouteFromService(origin, destination, service, { steps: false, overview: "full" }),
-    () => requestDrivingRouteFromService(origin, destination, service, { steps: true, overview: "simplified" }),
-    () => requestDrivingRouteFromService(origin, destination, service, { steps: false, overview: "simplified" })
-  ]));
+  const attempts = [
+    { steps: true, overview: "full" },
+    { steps: true, overview: "simplified" }
+  ];
 
   let lastError = null;
-  for (const attempt of attempts) {
+  for (const options of attempts) {
     try {
-      return await attempt();
+      return await requestDrivingRouteBatch(origin, destination, options);
     } catch (error) {
       lastError = error;
     }
