@@ -239,7 +239,7 @@ body {
 .eyebrow-row {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
@@ -249,7 +249,7 @@ body {
   justify-content: center;
   width: 28px;
   height: 28px;
-  margin-top: -6px;
+  margin-top: -2px;
   padding: 0;
   border: none;
   background: transparent;
