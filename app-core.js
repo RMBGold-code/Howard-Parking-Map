@@ -799,11 +799,11 @@ function syncParkingSelection() {
   mapState.parkingMarkers.forEach(({ id, marker }) => {
     const selected = id === mapState.selectedParkingId;
     marker.setStyle({
-      radius: selected ? 10 : 8,
-      color: selected ? "#10231e" : "#ffffff",
-      weight: selected ? 3 : 2,
+      radius: selected ? 11 : 9,
+      color: "#10231e",
+      weight: selected ? 3.5 : 2.5,
       fillColor: "#c08a10",
-      fillOpacity: selected ? 1 : 0.95
+      fillOpacity: selected ? 1 : 0.98
     });
   });
 }
@@ -874,11 +874,11 @@ function showParkingMarkers(destination, parkingSpots) {
   mapState.parkingOptions = parkingSpots;
   mapState.parkingMarkers = parkingSpots.map((spot) => {
     const marker = L.circleMarker([spot.lat, spot.lng], {
-      radius: 8,
-      color: "#ffffff",
-      weight: 2,
+      radius: 9,
+      color: "#10231e",
+      weight: 2.5,
       fillColor: "#c08a10",
-      fillOpacity: 0.95
+      fillOpacity: 0.98
     }).addTo(mapState.map);
 
     marker.bindPopup(`
@@ -1201,11 +1201,11 @@ function setCurrentLocation(lat, lng, accuracy = 0, options = {}) {
 
   if (!mapState.userLocationMarker) {
     mapState.userLocationMarker = L.circleMarker([lat, lng], {
-      radius: 10,
-      color: "#ffffff",
-      weight: 3,
+      radius: 10.5,
+      color: "#10231e",
+      weight: 3.5,
       fillColor: "#0d5a8d",
-      fillOpacity: 0.95
+      fillOpacity: 0.98
     }).addTo(mapState.map);
     mapState.userLocationMarker.on("dblclick", handleUserMarkerDoubleActivate);
     mapState.userLocationMarker.on("click", handleUserMarkerTap);
@@ -1662,11 +1662,11 @@ function createMap() {
 
     const style = categoryStyles[building.category];
     const layer = L.circleMarker([point.lat, point.lng], {
-      radius: 9,
-      color: "#ffffff",
-      weight: 2,
+      radius: 10,
+      color: "#10231e",
+      weight: 2.5,
       fillColor: style.color,
-      fillOpacity: 0.92
+      fillOpacity: 0.98
     }).addTo(map);
 
     layer.bindTooltip(building.shortLabel, {
@@ -1778,12 +1778,12 @@ function syncMapState() {
 
     layer.setStyle({
       fillColor: style.color,
-      fillOpacity: visible ? (selected ? 0.96 : 0.82) : 0,
-      color: selected ? "#10231e" : "#ffffff",
-      weight: selected ? 3 : 2,
+      fillOpacity: visible ? (selected ? 1 : 0.9) : 0,
+      color: "#10231e",
+      weight: selected ? 3.5 : 2.5,
       opacity: visible ? 1 : 0
     });
-    layer.setRadius(visible ? (selected ? 11 : 8) : 0);
+    layer.setRadius(visible ? (selected ? 12 : 9.5) : 0);
 
     const tooltipElement = layer.getTooltip()?.getElement?.();
     if (tooltipElement) {
