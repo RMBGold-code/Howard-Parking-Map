@@ -95,6 +95,14 @@ const FOLLOW_NAVIGATION_ZOOM = 19;
 const FOLLOW_ROUTE_REFRESH_MS = 9000;
 const FOLLOW_ROUTE_REFRESH_MILES = 0.03;
 const DOUBLE_TAP_WINDOW_MS = 360;
+const CAMPUS_VIEW_CATEGORIES = new Set([
+  "health-sciences",
+  "library-admin",
+  "academic",
+  "student-life",
+  "arts",
+  "athletics"
+]);
 const HOT_CATEGORIES = new Set(["restaurant", "brunch", "winery", "event-venue"]);
 const HOT_PLACE_NAMES = new Set([
   "Ben's Chili Bowl",
@@ -1577,6 +1585,10 @@ function destinationFromLocalMatch(building) {
 }
 
 function matchesViewMode(building) {
+  if (mapState.currentView === "campus") {
+    return CAMPUS_VIEW_CATEGORIES.has(building.category);
+  }
+
   if (mapState.currentView === "dining") {
     return ["restaurant", "brunch", "winery"].includes(building.category);
   }
