@@ -103,6 +103,10 @@ const CAMPUS_VIEW_CATEGORIES = new Set([
   "arts",
   "athletics"
 ]);
+const HEALTH_SCIENCES_VIEW_CATEGORIES = new Set([
+  "health-sciences",
+  "library-admin"
+]);
 const HOT_CATEGORIES = new Set(["restaurant", "brunch", "winery", "event-venue"]);
 const HOT_PLACE_NAMES = new Set([
   "Ben's Chili Bowl",
@@ -1587,6 +1591,10 @@ function destinationFromLocalMatch(building) {
 function matchesViewMode(building) {
   if (mapState.currentView === "campus") {
     return CAMPUS_VIEW_CATEGORIES.has(building.category);
+  }
+
+  if (mapState.currentView === "hospital") {
+    return HEALTH_SCIENCES_VIEW_CATEGORIES.has(building.category);
   }
 
   if (mapState.currentView === "dining") {
