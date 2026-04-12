@@ -38,7 +38,7 @@ body {
 .hero,
 .layout,
 .remote-card {
-  margin-bottom: 24px;
+  margin-bottom: 30px;
 }
 
 .hero {
@@ -328,7 +328,7 @@ body {
 .details-card h3,
 .remote-card h2 {
   margin: 0 0 14px;
-  font-size: 1.45rem;
+  font-size: 1.56rem;
 }
 
 .filter-dropdown {
@@ -383,7 +383,7 @@ body {
 }
 
 .directory-summary h3 {
-  font-size: 1.36rem;
+  font-size: 1.46rem;
   line-height: 1.2;
   white-space: normal;
 }
@@ -524,7 +524,7 @@ body {
 
 .map-title-row h2,
 .details-card h2 {
-  font-size: clamp(1.8rem, 3vw, 2.45rem);
+  font-size: clamp(1.92rem, 3.1vw, 2.6rem);
 }
 
 .leaflet-map {
@@ -1329,6 +1329,10 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--category-tint, rgba(255, 255, 255, 0.78));
+  border: 1px solid var(--category-border, rgba(19, 63, 120, 0.18));
   font-size: 0.82rem;
   color: var(--category-color, #3c574f);
   font-weight: 700;
