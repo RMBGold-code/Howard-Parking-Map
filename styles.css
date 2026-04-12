@@ -112,7 +112,10 @@ body {
 }
 
 .hero-text {
+  display: flex;
+  flex-direction: column;
   padding-top: 10px;
+  min-height: 100%;
 }
 
 .eyebrow,
@@ -188,7 +191,7 @@ body {
   grid-template-columns: 136px minmax(0, 1fr);
   gap: 16px;
   align-items: center;
-  margin-top: 16px;
+  margin-top: auto;
   padding: 14px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.76);
@@ -290,6 +293,7 @@ body {
 
 .hero-photo-card {
   margin: 0;
+  align-self: end;
   border-radius: 22px;
   overflow: hidden;
   border: 1px solid rgba(19, 63, 120, 0.16);
@@ -1415,7 +1419,9 @@ a {
   }
 
   .hero-text {
+    display: block;
     padding-top: 0;
+    min-height: auto;
   }
 
   .hero-logo {
@@ -1441,6 +1447,7 @@ a {
   .app-qr-panel {
     grid-template-columns: 1fr;
     justify-items: start;
+    margin-top: 16px;
   }
 
   .map-title-row,
