@@ -232,8 +232,54 @@ body {
 }
 
 .hero-copy .eyebrow {
-  color: #fff6f6;
+  color: #11161c;
   margin-top: 2px;
+}
+
+.eyebrow-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.landmark-info-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-top: -6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #173556;
+  font: 700 1rem/1 "Segoe UI Symbol", "Arial Unicode MS", sans-serif;
+  cursor: pointer;
+  transition: transform 140ms ease, color 140ms ease;
+}
+
+.landmark-info-button:hover,
+.landmark-info-button:focus-visible {
+  color: #0d5a8d;
+  transform: translateY(-1px);
+}
+
+.landmark-info-bubble {
+  max-width: 54ch;
+  margin: 6px 0 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(19, 63, 120, 0.14);
+  box-shadow: 0 14px 24px rgba(16, 35, 30, 0.1);
+  color: #324b62;
+  line-height: 1.5;
+  animation: detailFadeIn 180ms ease;
+}
+
+.landmark-info-bubble.is-hidden {
+  display: none;
 }
 
 .hero-photo-card {

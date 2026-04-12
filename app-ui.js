@@ -666,6 +666,28 @@ function syncInstalledAppState() {
   document.body.classList.toggle("is-installed-app", isInstalledApp());
 }
 
+const landmarkInfoButton = document.getElementById("landmarkInfoButton");
+const landmarkInfoBubble = document.getElementById("landmarkInfoBubble");
+
+function closeLandmarkInfoBubble() {
+  if (!landmarkInfoButton || !landmarkInfoBubble) {
+    return;
+  }
+
+  landmarkInfoBubble.classList.add("is-hidden");
+  landmarkInfoButton.setAttribute("aria-expanded", "false");
+}
+
+function toggleLandmarkInfoBubble() {
+  if (!landmarkInfoButton || !landmarkInfoBubble) {
+    return;
+  }
+
+  const shouldOpen = landmarkInfoBubble.classList.contains("is-hidden");
+  landmarkInfoBubble.classList.toggle("is-hidden", !shouldOpen);
+  landmarkInfoButton.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+}
+
 function updateInstallHelpUI() {
   const profile = deviceProfile();
   const showIosHelp = hostedAppUrl() && !isInstalledApp() && profile.isIOS;
@@ -859,6 +881,28 @@ mapUseLocationButton?.addEventListener("click", requestCurrentLocation);
 mapNavigateButton?.addEventListener("click", fetchTurnByTurnRoute);
 mapVoiceGuidanceButton?.addEventListener("click", toggleVoiceGuidance);
 clearSelectionButton.addEventListener("click", clearSelection);
+landmarkInfoButton?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  toggleLandmarkInfoBubble();
+});
+
+document.addEventListener("click", (event) => {
+  if (!landmarkInfoButton || !landmarkInfoBubble || landmarkInfoBubble.classList.contains("is-hidden")) {
+    return;
+  }
+
+  if (landmarkInfoButton.contains(event.target) || landmarkInfoBubble.contains(event.target)) {
+    return;
+  }
+
+  closeLandmarkInfoBubble();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeLandmarkInfoBubble();
+  }
+});
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
