@@ -502,6 +502,12 @@ body {
   display: grid;
   grid-template-columns: minmax(620px, 1.35fr) minmax(320px, 0.8fr);
   gap: 22px;
+  align-items: start;
+}
+
+.map-card,
+.details-card {
+  align-self: start;
 }
 
 .site-footer {
