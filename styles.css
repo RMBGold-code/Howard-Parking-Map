@@ -516,6 +516,7 @@ body {
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid rgba(16, 59, 77, 0.12);
+  box-shadow: 0 14px 30px rgba(16, 35, 30, 0.12);
   background:
     linear-gradient(180deg, rgba(147, 194, 231, 0.2), rgba(147, 194, 231, 0.08)),
     linear-gradient(180deg, #d7ead0, #cedfcb);
