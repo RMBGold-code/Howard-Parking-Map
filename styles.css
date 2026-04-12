@@ -82,12 +82,14 @@ body {
   display: flex;
   justify-content: flex-start;
   margin: 41px 0 18px -24px;
+  width: calc(100% + 24px);
 }
 
 .hero-logo-shell {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  width: 100%;
   padding: 16px 22px 14px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.98);
@@ -97,7 +99,7 @@ body {
 
 .hero-logo {
   display: block;
-  width: clamp(240px, 34vw, 410px);
+  width: 100%;
   height: auto;
   filter: saturate(1.08) contrast(1.14) brightness(0.98) drop-shadow(0 8px 14px rgba(16, 35, 30, 0.1));
 }
@@ -1417,7 +1419,7 @@ a {
   }
 
   .hero-logo {
-    width: min(100%, 340px);
+    width: 100%;
   }
 
   .hero-title {
