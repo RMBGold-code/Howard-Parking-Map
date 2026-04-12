@@ -95,6 +95,23 @@ const FOLLOW_NAVIGATION_ZOOM = 19;
 const FOLLOW_ROUTE_REFRESH_MS = 9000;
 const FOLLOW_ROUTE_REFRESH_MILES = 0.03;
 const DOUBLE_TAP_WINDOW_MS = 360;
+const HOT_CATEGORIES = new Set(["restaurant", "brunch", "winery", "event-venue"]);
+const HOT_PLACE_NAMES = new Set([
+  "Ben's Chili Bowl",
+  "Busboys and Poets 14th & V",
+  "Le Diplomate",
+  "Maydan",
+  "Founding Farmers DC",
+  "Rasika Penn Quarter",
+  "Zaytinya",
+  "District Winery",
+  "Howard Theatre",
+  "9:30 Club",
+  "Lincoln Theatre",
+  "The Anthem",
+  "Nationals Park",
+  "MGM National Harbor"
+]);
 
 let activeFilter = "all";
 let selectedBuildingName = "";
@@ -1695,6 +1712,10 @@ function filteredBuildings() {
   return buildings.filter(matchesCurrentView).sort((a, b) => a.name.localeCompare(b.name));
 }
 
+function showHotBadge(building) {
+  return HOT_CATEGORIES.has(building.category) && HOT_PLACE_NAMES.has(building.name);
+}
+
 function renderDetails() {
   const building = buildings.find((item) => item.name === selectedBuildingName);
   if (!building) {
@@ -1748,6 +1769,7 @@ function renderList() {
             ${style.label}
           </span>
         </div>
+        ${showHotBadge(building) ? `<div class="lot-hot">🔥 HOT</div>` : ""}
         <div class="lot-meta"><strong class="lot-inline-label">${building.shortLabel}</strong> | ${building.typeLabel}</div>
         <div class="lot-address">${building.address}</div>
         <div class="lot-hours">Hours: ${hours}</div>
@@ -1807,4 +1829,31 @@ function focusBuildingOnMap(building) {
     duration: 0.7
   });
   layer.openPopup();
+  bounceLandmarkMarker(layer);
+}
+
+function bounceLandmarkMarker(layer) {
+  if (!layer || typeof layer.setRadius !== "function") {
+    return;
+  }
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return;
+  }
+
+  const baseRadius = typeof layer.getRadius === "function" ? layer.getRadius() : 12;
+  const baseWeight = layer.options?.weight ?? 3.5;
+  const frames = [
+    { radius: baseRadius, weight: baseWeight, delay: 0 },
+    { radius: baseRadius + 4, weight: baseWeight + 0.8, delay: 90 },
+    { radius: baseRadius + 1.5, weight: baseWeight + 0.3, delay: 180 },
+    { radius: baseRadius + 3, weight: baseWeight + 0.6, delay: 270 },
+    { radius: baseRadius, weight: baseWeight, delay: 360 }
+  ];
+
+  (layer.__bounceTimeouts || []).forEach((timeoutId) => window.clearTimeout(timeoutId));
+  layer.__bounceTimeouts = frames.map((frame) => window.setTimeout(() => {
+    layer.setStyle({ weight: frame.weight });
+    layer.setRadius(frame.radius);
+  }, frame.delay));
 }
