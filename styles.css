@@ -237,6 +237,7 @@ body {
 }
 
 .eyebrow-row {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -266,8 +267,11 @@ body {
 }
 
 .landmark-info-bubble {
-  max-width: 54ch;
-  margin: 6px 0 0;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 12;
+  width: min(470px, calc(100vw - 104px));
   padding: 12px 14px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.92);
