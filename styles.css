@@ -409,6 +409,14 @@ body {
   box-shadow: 0 10px 22px rgba(16, 35, 30, 0.1);
 }
 
+.legend-chip:hover,
+.legend-chip:focus-visible {
+  border-color: rgba(19, 63, 120, 0.34);
+  background: linear-gradient(180deg, rgba(227, 239, 255, 0.98), rgba(255, 255, 255, 1));
+  box-shadow: 0 14px 28px rgba(16, 35, 30, 0.14);
+  transform: translateY(-2px);
+}
+
 .legend-chip:not(.is-active) {
   opacity: 0.48;
 }
