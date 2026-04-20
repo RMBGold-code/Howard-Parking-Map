@@ -672,13 +672,10 @@ function speakNavigationGuidance(route, destination, options = {}) {
   stopVoiceGuidancePlayback();
 
   const parts = [];
-  if (options.includeSummary !== false) {
-    parts.push(`Driving route ready for ${destination.name}. ${formatDistanceMiles(route.distance)} total, about ${formatDuration(route.duration / 60)}.`);
-  }
   if (nextStep.maneuver?.type === "arrive") {
     parts.push("You have arrived at your destination.");
   } else {
-    parts.push(`Next step: ${nextInstruction}. Continue for ${formatDistanceMiles(nextStep.distance)}.`);
+    parts.push(`${nextInstruction}. Continue for ${formatDistanceMiles(nextStep.distance)}.`);
   }
 
   const utterance = new SpeechSynthesisUtterance(parts.join(" "));
@@ -753,7 +750,7 @@ function toggleVoiceGuidance() {
     navigationStatus.textContent = "Voice guidance is on. Spoken navigation updates will play when routes are ready.";
     const destination = selectedNavigationTarget();
     if (destination && mapState.routeData) {
-      speakNavigationGuidance(mapState.routeData, destination, { force: true, includeSummary: true });
+      speakNavigationGuidance(mapState.routeData, destination, { force: true });
     } else {
       speakImmediateMessage("Voice guidance is now on.");
     }
@@ -1128,7 +1125,7 @@ function updateNavigationUI() {
   if (mapState.routeData && mapState.routeKey === currentRouteKey) {
     navigationStatus.textContent = mapState.navigationFollowMode
       ? `${routeModeLabel(mapState.routeMode)} follow mode is active for ${destination.name}.`
-      : `${routeModeLabel(mapState.routeMode)} directions are ready for ${destination.name}. Double-click your blue location marker to enter follow mode.`;
+      : `${routeModeLabel(mapState.routeMode)} directions are ready for ${destination.name}.`;
     return;
   }
 
@@ -1611,6 +1608,9 @@ async function fetchTurnByTurnRoute() {
 
   const wasNavigating = mapState.navigationActive;
   mapState.navigationActive = true;
+  if (mapState.map && mapState.currentLocation) {
+    mapState.navigationFollowMode = true;
+  }
   mapState.navigationFallbackMessage = "";
   const requestKey = buildRouteKey(origin, destination, mapState.routeMode);
   if (mapState.routeData && mapState.routeKey === requestKey) {
@@ -1673,8 +1673,7 @@ async function fetchTurnByTurnRoute() {
     mapState.activeGuidanceStepIndex = 0;
     mapState.lastGuidanceAdvanceAt = 0;
     speakNavigationGuidance(route, destination, {
-      force: !mapState.navigationFollowMode,
-      includeSummary: !mapState.navigationFollowMode
+      force: !mapState.navigationFollowMode
     });
     updateNavigationUI();
   } catch (error) {
