@@ -1,6 +1,7 @@
 function selectBuilding(name, moveMap = false, snapToMap = false) {
   selectedBuildingName = name;
   mapState.selectedParkingId = "";
+  resetArrivalParkingPrompt();
   disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
@@ -422,6 +423,8 @@ async function fetchNearbyParking(destination) {
     .sort((a, b) => a.distanceMeters - b.distanceMeters)
     .slice(0, 8);
 }
+
+window.fetchNearbyParkingForDestination = fetchNearbyParking;
 
 function fitDestinationAndParking(destination, parkingSpots) {
   if (!mapState.map) {

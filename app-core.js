@@ -75,7 +75,9 @@ const mapState = {
   voiceGuidanceEnabled: false,
   lastSpokenInstructionKey: "",
   activeGuidanceStepIndex: -1,
-  lastGuidanceAdvanceAt: 0
+  lastGuidanceAdvanceAt: 0,
+  arrivalParkingPromptKey: "",
+  parkingPromptInFlight: false
 };
 
 const DRIVING_ROUTE_SERVICES = [
@@ -92,9 +94,10 @@ const DRIVING_ROUTE_SERVICES = [
 const ROUTE_REQUEST_SPACING_MS = 250;
 const ROUTE_REQUEST_TIMEOUT_MS = 4500;
 const FOLLOW_NAVIGATION_ZOOM = 19;
-const FOLLOW_ROUTE_REFRESH_MS = 9000;
-const FOLLOW_ROUTE_REFRESH_MILES = 0.03;
+const FOLLOW_ROUTE_REFRESH_MS = 6000;
+const FOLLOW_ROUTE_REFRESH_MILES = 0.02;
 const DOUBLE_TAP_WINDOW_MS = 360;
+const ARRIVAL_PROMPT_THRESHOLD_MILES = 0.05;
 const CAMPUS_VIEW_CATEGORIES = new Set([
   "health-sciences",
   "library-admin",
@@ -781,6 +784,15 @@ function selectedNavigationTarget() {
   return selectedParking() || selectedBuilding();
 }
 
+function resetArrivalParkingPrompt() {
+  mapState.arrivalParkingPromptKey = "";
+  mapState.parkingPromptInFlight = false;
+}
+
+function activeArrivalLandmarkTarget() {
+  return mapState.selectedParkingId ? null : selectedBuilding();
+}
+
 function normalizePoint(lat, lng) {
   const parsedLat = Number(lat);
   const parsedLng = Number(lng);
@@ -839,6 +851,7 @@ function syncParkingSelection() {
 
 function selectParkingSpot(id, moveMap = false, snapToMap = false) {
   mapState.selectedParkingId = id;
+  resetArrivalParkingPrompt();
   disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
@@ -868,6 +881,23 @@ function selectParkingSpot(id, moveMap = false, snapToMap = false) {
   }
 }
 
+async function navigateToParkingSpot(id, moveMap = false, snapToMap = false) {
+  selectParkingSpot(id, moveMap, snapToMap);
+  const spot = selectedParking();
+  if (!spot) {
+    return;
+  }
+
+  if (!mapState.currentLocation) {
+    navigationStatus.textContent = `Parking selected: ${spot.name}. Use your location or set a starting location to begin navigation.`;
+    updateNavigationUI();
+    return;
+  }
+
+  navigationStatus.textContent = `Building a driving route to parking at ${spot.name}...`;
+  await fetchTurnByTurnRoute();
+}
+
 function renderParkingResults(destination, parkingSpots) {
   if (!parkingSpots.length) {
     parkingResults.classList.add("is-hidden");
@@ -887,10 +917,38 @@ function renderParkingResults(destination, parkingSpots) {
   parkingResults.classList.remove("is-hidden");
 
   parkingResults.querySelectorAll("[data-parking-id]").forEach((button) => {
-    button.addEventListener("click", () => selectParkingSpot(button.dataset.parkingId, true, true));
+    button.addEventListener("click", () => {
+      navigateToParkingSpot(button.dataset.parkingId, true, true);
+    });
   });
 
   syncParkingSelection();
+}
+
+function fitDestinationAndParkingPoints(destination, parkingSpots) {
+  if (!mapState.map) {
+    return;
+  }
+
+  const destinationPoint = normalizePoint(destination?.lat, destination?.lng);
+  if (!destinationPoint) {
+    return;
+  }
+
+  const points = [
+    [destinationPoint.lat, destinationPoint.lng],
+    ...parkingSpots
+      .map((spot) => normalizePoint(spot?.lat, spot?.lng))
+      .filter(Boolean)
+      .map((point) => [point.lat, point.lng])
+  ];
+
+  if (points.length === 1) {
+    mapState.map.flyTo(points[0], Math.max(mapState.map.getZoom(), 16), { duration: 0.7 });
+    return;
+  }
+
+  mapState.map.fitBounds(points, { padding: [30, 30] });
 }
 
 function showParkingMarkers(destination, parkingSpots) {
@@ -1039,6 +1097,7 @@ function updateNavigationUI() {
 function clearSelection() {
   selectedBuildingName = "";
   mapState.selectedParkingId = "";
+  resetArrivalParkingPrompt();
   disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
@@ -1060,6 +1119,7 @@ function clearSelection() {
 
 function stopNavigation() {
   disableNavigationFollowMode();
+  resetArrivalParkingPrompt();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
   mapState.lastSpokenInstructionKey = "";
@@ -1115,8 +1175,6 @@ function maybeRefreshFollowRoute(previousLocation, nextLocation) {
 
   if (mapState.navigationFollowMode) {
     syncFollowViewport();
-  } else {
-    return;
   }
 
   if (!nextLocation) {
@@ -1129,6 +1187,60 @@ function maybeRefreshFollowRoute(previousLocation, nextLocation) {
 
   if ((!mapState.routeData || movedMiles >= FOLLOW_ROUTE_REFRESH_MILES) && enoughTime && !mapState.routeRequestKeyPending) {
     fetchTurnByTurnRoute();
+  }
+}
+
+async function maybePromptForParkingAfterArrival(currentLocation) {
+  if (!mapState.navigationActive || mapState.parkingPromptInFlight) {
+    return;
+  }
+
+  const destination = activeArrivalLandmarkTarget();
+  if (!destination || !currentLocation) {
+    return;
+  }
+
+  if (mapState.arrivalParkingPromptKey === destination.name) {
+    return;
+  }
+
+  if (distanceMiles(currentLocation, destination) > ARRIVAL_PROMPT_THRESHOLD_MILES) {
+    return;
+  }
+
+  mapState.arrivalParkingPromptKey = destination.name;
+  mapState.parkingPromptInFlight = true;
+
+  try {
+    const parkingFetcher = window.fetchNearbyParkingForDestination;
+    if (typeof parkingFetcher !== "function") {
+      navigationStatus.textContent = `You have arrived at ${destination.name}.`;
+      stopNavigation();
+      return;
+    }
+
+    const parkingSpots = await parkingFetcher(destination);
+    if (!parkingSpots.length) {
+      navigationStatus.textContent = `You have arrived at ${destination.name}. No nearby parking entries were returned.`;
+      stopNavigation();
+      return;
+    }
+
+    const shouldNavigateToParking = window.confirm(`You have arrived at ${destination.name}. Would you like directions to the nearest parking location?`);
+    if (!shouldNavigateToParking) {
+      navigationStatus.textContent = `You have arrived at ${destination.name}.`;
+      stopNavigation();
+      return;
+    }
+
+    showParkingMarkers(destination, parkingSpots);
+    fitDestinationAndParkingPoints(destination, parkingSpots);
+    await navigateToParkingSpot(parkingSpots[0].id, true, true);
+  } catch (error) {
+    navigationStatus.textContent = `You have arrived at ${destination.name}, but nearby parking search is unavailable right now.`;
+    stopNavigation();
+  } finally {
+    mapState.parkingPromptInFlight = false;
   }
 }
 
@@ -1277,6 +1389,7 @@ function setCurrentLocation(lat, lng, accuracy = 0, options = {}) {
   }
 
   maybeAdvanceVoiceGuidance(mapState.currentLocation);
+  maybePromptForParkingAfterArrival(mapState.currentLocation);
   updateNavigationUI();
 }
 
@@ -1438,6 +1551,7 @@ async function fetchTurnByTurnRoute() {
     return;
   }
 
+  const wasNavigating = mapState.navigationActive;
   mapState.navigationActive = true;
   mapState.navigationFallbackMessage = "";
   const requestKey = buildRouteKey(origin, destination, mapState.routeMode);
@@ -1451,6 +1565,7 @@ async function fetchTurnByTurnRoute() {
   }
 
   mapState.routeRequestKeyPending = requestKey;
+  const isRouteRefresh = Boolean(wasNavigating && mapState.routeData);
   syncNavigationActivityUI(destination, origin);
   navigationStatus.textContent = `Building a ${mapState.routeMode} route to ${destination.name}...`;
   routeSummary.classList.add("is-hidden");
@@ -1493,7 +1608,7 @@ async function fetchTurnByTurnRoute() {
     mapState.lastRouteRefreshPoint = origin ? { ...origin } : null;
     if (mapState.navigationFollowMode) {
       syncFollowViewport();
-    } else {
+    } else if (!isRouteRefresh) {
       mapState.map.fitBounds(points, { padding: [32, 32] });
     }
     renderRouteDetails(route);
