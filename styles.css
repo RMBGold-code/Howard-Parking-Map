@@ -891,6 +891,17 @@ body {
   gap: 10px;
 }
 
+.is-installed-app .hero-brand-row {
+  justify-content: center;
+  margin: 41px 0 18px;
+  width: 100%;
+}
+
+.is-installed-app .hero-logo-shell {
+  justify-content: center;
+  width: min(100%, 94%);
+}
+
 .app-map-button {
   display: inline-flex;
   align-items: center;
