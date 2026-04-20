@@ -98,6 +98,7 @@ const FOLLOW_ROUTE_REFRESH_MS = 6000;
 const FOLLOW_ROUTE_REFRESH_MILES = 0.02;
 const DOUBLE_TAP_WINDOW_MS = 360;
 const ARRIVAL_PROMPT_THRESHOLD_MILES = 0.05;
+const OFF_ROUTE_REROUTE_THRESHOLD_MILES = 0.045;
 const CAMPUS_VIEW_CATEGORIES = new Set([
   "health-sciences",
   "library-admin",
@@ -200,6 +201,56 @@ function distanceMiles(from, to) {
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return earthRadiusMiles * c;
+}
+
+function projectPointToMiles(origin, point) {
+  const averageLat = toRadians((origin.lat + point.lat) / 2);
+  const milesPerLatDegree = 69.0;
+  const milesPerLngDegree = 69.172 * Math.cos(averageLat);
+  return {
+    x: (point.lng - origin.lng) * milesPerLngDegree,
+    y: (point.lat - origin.lat) * milesPerLatDegree
+  };
+}
+
+function pointToSegmentDistanceMiles(point, segmentStart, segmentEnd) {
+  const a = projectPointToMiles(point, segmentStart);
+  const b = projectPointToMiles(point, segmentEnd);
+  const p = { x: 0, y: 0 };
+
+  const abx = b.x - a.x;
+  const aby = b.y - a.y;
+  const abLengthSquared = (abx * abx) + (aby * aby);
+
+  if (!abLengthSquared) {
+    return Math.hypot(a.x - p.x, a.y - p.y);
+  }
+
+  const apx = p.x - a.x;
+  const apy = p.y - a.y;
+  const t = Math.max(0, Math.min(1, ((apx * abx) + (apy * aby)) / abLengthSquared));
+  const closestX = a.x + (abx * t);
+  const closestY = a.y + (aby * t);
+  return Math.hypot(closestX - p.x, closestY - p.y);
+}
+
+function distanceFromPointToRouteMiles(point, route) {
+  const coordinates = route?.geometry?.coordinates;
+  if (!point || !Array.isArray(coordinates) || coordinates.length < 2) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  let minDistance = Number.POSITIVE_INFINITY;
+  for (let index = 0; index < coordinates.length - 1; index += 1) {
+    const start = normalizePoint(coordinates[index]?.[1], coordinates[index]?.[0]);
+    const end = normalizePoint(coordinates[index + 1]?.[1], coordinates[index + 1]?.[0]);
+    if (!start || !end) {
+      continue;
+    }
+    minDistance = Math.min(minDistance, pointToSegmentDistanceMiles(point, start, end));
+  }
+
+  return minDistance;
 }
 
 function bearingDegrees(from, to) {
@@ -1184,8 +1235,15 @@ function maybeRefreshFollowRoute(previousLocation, nextLocation) {
   const referencePoint = mapState.lastRouteRefreshPoint || previousLocation || nextLocation;
   const movedMiles = distanceMiles(referencePoint, nextLocation);
   const enoughTime = (Date.now() - mapState.lastRouteRefreshAt) >= FOLLOW_ROUTE_REFRESH_MS;
+  const offRouteMiles = mapState.routeData
+    ? distanceFromPointToRouteMiles(nextLocation, mapState.routeData)
+    : Number.POSITIVE_INFINITY;
+  const isOffRoute = Number.isFinite(offRouteMiles) && offRouteMiles >= OFF_ROUTE_REROUTE_THRESHOLD_MILES;
 
-  if ((!mapState.routeData || movedMiles >= FOLLOW_ROUTE_REFRESH_MILES) && enoughTime && !mapState.routeRequestKeyPending) {
+  if ((!mapState.routeData || movedMiles >= FOLLOW_ROUTE_REFRESH_MILES || isOffRoute) && enoughTime && !mapState.routeRequestKeyPending) {
+    if (isOffRoute) {
+      navigationStatus.textContent = "You’ve moved off the current route. Rerouting now...";
+    }
     fetchTurnByTurnRoute();
   }
 }
