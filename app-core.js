@@ -93,7 +93,7 @@ const DRIVING_ROUTE_SERVICES = [
 
 const ROUTE_REQUEST_SPACING_MS = 250;
 const ROUTE_REQUEST_TIMEOUT_MS = 4500;
-const FOLLOW_NAVIGATION_ZOOM = 19;
+const FOLLOW_NAVIGATION_ZOOM = 20;
 const FOLLOW_ROUTE_REFRESH_MS = 6000;
 const FOLLOW_ROUTE_REFRESH_MILES = 0.02;
 const DOUBLE_TAP_WINDOW_MS = 360;
@@ -1610,6 +1610,9 @@ async function fetchTurnByTurnRoute() {
   mapState.navigationActive = true;
   if (mapState.map && mapState.currentLocation) {
     mapState.navigationFollowMode = true;
+    setBasemap("street");
+    startLiveLocationWatch();
+    syncFollowViewport();
   }
   mapState.navigationFallbackMessage = "";
   const requestKey = buildRouteKey(origin, destination, mapState.routeMode);
