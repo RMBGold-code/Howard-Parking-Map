@@ -15,15 +15,17 @@ function selectBuilding(name, moveMap = false, snapToMap = false) {
   updateNavigationUI();
   syncClearSelectionButton();
 
-  if (mapState.currentLocation && building) {
-    clearRouteDetails();
-    updateNavigationUI();
-  }
-
   if (moveMap) {
     if (building) {
       focusBuildingOnMap(building);
     }
+  }
+
+  if (mapState.currentLocation && building) {
+    clearRouteDetails();
+    previewOptimalRoute({
+      fitBounds: true
+    });
   }
 
   if (snapToMap) {
@@ -592,8 +594,10 @@ async function chooseStartingLocation() {
 
   if (selectedNavigationTarget()) {
     clearRouteDetails();
-    navigationStatus.textContent = `Starting location set to ${start.name}. Select Navigate to selected to build a ${mapState.routeMode} route.`;
-    updateNavigationUI();
+    navigationStatus.textContent = `Starting location set to ${start.name}. Highlighting the best ${mapState.routeMode} route now...`;
+    previewOptimalRoute({
+      fitBounds: true
+    });
   } else {
     navigationStatus.textContent = `Starting location set to ${start.name}. Select a destination to navigate.`;
   }

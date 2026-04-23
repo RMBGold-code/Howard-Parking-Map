@@ -60,6 +60,7 @@ const mapState = {
   userLocationMarker: null,
   userAccuracyRing: null,
   navigationLine: null,
+  navigationLineHalo: null,
   navigationActive: false,
   navigationFallbackMessage: "",
   routeMode: "driving",
@@ -911,17 +912,19 @@ function selectParkingSpot(id, moveMap = false, snapToMap = false) {
   syncClearSelectionButton();
 
   const spot = selectedParking();
-  if (mapState.currentLocation && spot) {
-    clearRouteDetails();
-    updateNavigationUI();
-  }
-
   if (moveMap && spot && mapState.map) {
     mapState.map.flyTo([spot.lat, spot.lng], Math.max(mapState.map.getZoom(), 18), {
       duration: 0.7
     });
     const entry = mapState.parkingMarkers.find((markerEntry) => markerEntry.id === id);
     entry?.marker.openPopup();
+  }
+
+  if (mapState.currentLocation && spot) {
+    clearRouteDetails();
+    previewOptimalRoute({
+      fitBounds: true
+    });
   }
 
   if (snapToMap) {
@@ -1046,18 +1049,30 @@ function setRouteMode(mode) {
   clearRouteDetails();
 
   updateNavigationUI();
+  if (mapState.currentLocation && selectedNavigationTarget()) {
+    previewOptimalRoute({
+      fitBounds: true,
+      silent: true
+    });
+  }
 }
 
 function clearNavigationGuide() {
   mapState.routeData = null;
   mapState.routeKey = "";
-  if (!mapState.map || !mapState.navigationLine) {
+  if (!mapState.map || (!mapState.navigationLine && !mapState.navigationLineHalo)) {
     clearRouteDetails();
     return;
   }
 
-  mapState.map.removeLayer(mapState.navigationLine);
-  mapState.navigationLine = null;
+  if (mapState.navigationLineHalo) {
+    mapState.map.removeLayer(mapState.navigationLineHalo);
+    mapState.navigationLineHalo = null;
+  }
+  if (mapState.navigationLine) {
+    mapState.map.removeLayer(mapState.navigationLine);
+    mapState.navigationLine = null;
+  }
   clearRouteDetails();
 }
 
@@ -1123,9 +1138,13 @@ function updateNavigationUI() {
   }
 
   if (mapState.routeData && mapState.routeKey === currentRouteKey) {
-    navigationStatus.textContent = mapState.navigationFollowMode
-      ? `${routeModeLabel(mapState.routeMode)} follow mode is active for ${destination.name}.`
-      : `${routeModeLabel(mapState.routeMode)} directions are ready for ${destination.name}.`;
+    if (mapState.navigationFollowMode) {
+      navigationStatus.textContent = `${routeModeLabel(mapState.routeMode)} follow mode is active for ${destination.name}.`;
+    } else if (mapState.navigationActive) {
+      navigationStatus.textContent = `${routeModeLabel(mapState.routeMode)} directions are ready for ${destination.name}.`;
+    } else {
+      navigationStatus.textContent = `The best ${mapState.routeMode} route to ${destination.name} is highlighted on the map. Select Navigate to selected to start live guidance.`;
+    }
     return;
   }
 
@@ -1463,28 +1482,84 @@ function drawNavigationGuide(options = {}) {
     [destination.lat, destination.lng]
   ];
 
-  if (!mapState.navigationLine) {
-    mapState.navigationLine = L.polyline(points, {
+  renderNavigationLine(points, {
+    fitBounds,
+    dashed: true
+  });
+  updateNavigationUI();
+}
+
+function renderNavigationLine(points, options = {}) {
+  const { fitBounds = true, dashed = false } = options;
+  if (!mapState.map || !Array.isArray(points) || !points.length) {
+    return;
+  }
+
+  const haloStyle = dashed
+    ? {
+      color: "rgba(16, 59, 77, 0.12)",
+      weight: 8,
+      opacity: 0.28,
+      dashArray: "10 10",
+      lineCap: "round",
+      lineJoin: "round"
+    }
+    : {
+      color: "#d7eefc",
+      weight: 13,
+      opacity: 0.95,
+      lineCap: "round",
+      lineJoin: "round"
+    };
+
+  const lineStyle = dashed
+    ? {
       color: "#103b4d",
       weight: 4,
       opacity: 0.8,
-      dashArray: "10 10"
-    }).addTo(mapState.map);
+      dashArray: "10 10",
+      lineCap: "round",
+      lineJoin: "round"
+    }
+    : {
+      color: "#0d5a8d",
+      weight: 7,
+      opacity: 0.96,
+      dashArray: null,
+      lineCap: "round",
+      lineJoin: "round"
+    };
+
+  if (!mapState.navigationLineHalo) {
+    mapState.navigationLineHalo = L.polyline(points, haloStyle).addTo(mapState.map);
   } else {
-    mapState.navigationLine.setStyle({
-      color: "#103b4d",
-      weight: 4,
-      opacity: 0.8,
-      dashArray: "10 10"
-    });
+    mapState.navigationLineHalo.setStyle(haloStyle);
+    mapState.navigationLineHalo.setLatLngs(points);
+  }
+
+  if (!mapState.navigationLine) {
+    mapState.navigationLine = L.polyline(points, lineStyle).addTo(mapState.map);
+  } else {
+    mapState.navigationLine.setStyle(lineStyle);
     mapState.navigationLine.setLatLngs(points);
   }
 
   if (fitBounds) {
     mapState.map.fitBounds(points, { padding: [32, 32] });
   }
+}
 
-  updateNavigationUI();
+function renderRouteOnMap(route, options = {}) {
+  const coordinates = route?.geometry?.coordinates || [];
+  const points = coordinates.map(([lng, lat]) => [lat, lng]);
+  if (!points.length) {
+    return;
+  }
+
+  renderNavigationLine(points, {
+    fitBounds: options.fitBounds !== false,
+    dashed: false
+  });
 }
 
 function sleep(ms) {
@@ -1597,6 +1672,64 @@ async function resolveDrivingRoute(origin, destination) {
   throw lastError || new Error("Driving route unavailable");
 }
 
+async function previewOptimalRoute(options = {}) {
+  const { fitBounds = true, silent = false } = options;
+  const destination = selectedNavigationTarget();
+  const origin = mapState.currentLocation;
+
+  if (!mapState.map || !origin || !destination) {
+    return false;
+  }
+
+  const requestKey = buildRouteKey(origin, destination, mapState.routeMode);
+  if (mapState.routeData && mapState.routeKey === requestKey) {
+    renderRouteOnMap(mapState.routeData, { fitBounds });
+    updateNavigationUI();
+    return true;
+  }
+
+  if (mapState.routeRequestKeyPending === requestKey) {
+    return false;
+  }
+
+  mapState.routeRequestKeyPending = requestKey;
+  if (!silent) {
+    navigationStatus.textContent = `Highlighting the best ${mapState.routeMode} route to ${destination.name}...`;
+  }
+
+  try {
+    const route = await resolveDrivingRoute(origin, destination);
+    if (requestKey !== buildRouteKey(mapState.currentLocation, selectedNavigationTarget(), mapState.routeMode)) {
+      return false;
+    }
+
+    mapState.routeData = route;
+    mapState.routeKey = requestKey;
+    mapState.navigationFallbackMessage = "";
+    renderRouteOnMap(route, { fitBounds });
+    renderRouteDetails(route);
+    updateNavigationUI();
+    return true;
+  } catch (error) {
+    if (requestKey !== buildRouteKey(mapState.currentLocation, selectedNavigationTarget(), mapState.routeMode)) {
+      return false;
+    }
+
+    mapState.routeData = null;
+    mapState.routeKey = "";
+    drawNavigationGuide({ fitBounds });
+    if (!silent) {
+      const reason = error?.message ? ` (${error.message})` : "";
+      navigationStatus.textContent = `The live route preview is unavailable right now, so the map is showing a straight guide line instead${reason}.`;
+    }
+    return false;
+  } finally {
+    if (mapState.routeRequestKeyPending === requestKey) {
+      mapState.routeRequestKeyPending = "";
+    }
+  }
+}
+
 async function fetchTurnByTurnRoute() {
   const destination = selectedNavigationTarget();
   const origin = mapState.currentLocation;
@@ -1643,34 +1776,14 @@ async function fetchTurnByTurnRoute() {
       return;
     }
 
-    const points = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-    if (!mapState.navigationLine) {
-      mapState.navigationLine = L.polyline(points, {
-        color: "#103b4d",
-        weight: 4,
-        opacity: 0.88,
-        smoothFactor: 0
-      }).addTo(mapState.map);
-    } else {
-      mapState.navigationLine.setStyle({
-        color: "#103b4d",
-        weight: 4,
-        opacity: 0.88,
-        dashArray: null,
-        smoothFactor: 0
-      });
-      mapState.navigationLine.setLatLngs(points);
-    }
-
     mapState.routeData = route;
     mapState.routeKey = requestKey;
     mapState.navigationFallbackMessage = "";
     mapState.lastRouteRefreshAt = Date.now();
     mapState.lastRouteRefreshPoint = origin ? { ...origin } : null;
+    renderRouteOnMap(route, { fitBounds: !mapState.navigationFollowMode && !isRouteRefresh });
     if (mapState.navigationFollowMode) {
       syncFollowViewport();
-    } else if (!isRouteRefresh) {
-      mapState.map.fitBounds(points, { padding: [32, 32] });
     }
     renderRouteDetails(route);
     mapState.activeGuidanceStepIndex = 0;
@@ -1715,8 +1828,10 @@ function requestCurrentLocation() {
       const destination = selectedNavigationTarget();
       if (destination) {
         clearRouteDetails();
-        navigationStatus.textContent = `Location updated.${accuracyText} Live tracking is on. Select Navigate to selected to build a ${mapState.routeMode} route to ${destination.name}.`;
-        updateNavigationUI();
+        navigationStatus.textContent = `Location updated.${accuracyText} Highlighting the best ${mapState.routeMode} route to ${destination.name}...`;
+        previewOptimalRoute({
+          fitBounds: true
+        });
       } else if (mapState.map) {
         navigationStatus.textContent = `Location updated.${accuracyText} Live tracking is on. Select a destination to navigate.`;
         mapState.map.flyTo([latitude, longitude], Math.max(mapState.map.getZoom(), 16), {
