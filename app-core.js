@@ -869,6 +869,26 @@ function resetArrivalState() {
   mapState.arrivedDestinationKey = "";
 }
 
+function announceArrival(destination, options = {}) {
+  const { messageSuffix = "", speak = true } = options;
+  if (!destination) {
+    return false;
+  }
+
+  const destinationKey = navigationDestinationKey(destination);
+  if (!destinationKey) {
+    return false;
+  }
+
+  mapState.arrivedDestinationKey = destinationKey;
+  const message = `You have arrived at ${destination.name}.${messageSuffix}`;
+  navigationStatus.textContent = message.trim();
+  if (speak) {
+    speakImmediateMessage(`You have arrived at ${destination.name}.`);
+  }
+  return true;
+}
+
 function resetArrivalParkingPrompt() {
   mapState.arrivalParkingPromptKey = "";
   mapState.parkingPromptInFlight = false;
@@ -1378,21 +1398,24 @@ async function maybePromptForParkingAfterArrival(currentLocation) {
   try {
     const parkingFetcher = window.fetchNearbyParkingForDestination;
     if (typeof parkingFetcher !== "function") {
-      navigationStatus.textContent = `You have arrived at ${destination.name}.`;
+      announceArrival(destination);
       stopNavigation();
       return;
     }
 
     const parkingSpots = await parkingFetcher(destination);
     if (!parkingSpots.length) {
-      navigationStatus.textContent = `You have arrived at ${destination.name}. No nearby parking entries were returned.`;
+      announceArrival(destination, {
+        messageSuffix: " No nearby parking entries were returned.",
+        speak: true
+      });
       stopNavigation();
       return;
     }
 
     const shouldNavigateToParking = window.confirm(`You have arrived at ${destination.name}. Would you like directions to the nearest parking location?`);
     if (!shouldNavigateToParking) {
-      navigationStatus.textContent = `You have arrived at ${destination.name}.`;
+      announceArrival(destination);
       stopNavigation();
       return;
     }
@@ -1401,7 +1424,10 @@ async function maybePromptForParkingAfterArrival(currentLocation) {
     fitDestinationAndParkingPoints(destination, parkingSpots);
     await navigateToParkingSpot(parkingSpots[0].id, true, true);
   } catch (error) {
-    navigationStatus.textContent = `You have arrived at ${destination.name}, but nearby parking search is unavailable right now.`;
+    announceArrival(destination, {
+      messageSuffix: " Nearby parking search is unavailable right now.",
+      speak: true
+    });
     stopNavigation();
   } finally {
     mapState.parkingPromptInFlight = false;
@@ -1427,9 +1453,7 @@ function maybeAnnounceArrival(currentLocation) {
     return;
   }
 
-  mapState.arrivedDestinationKey = destinationKey;
-  navigationStatus.textContent = `You have arrived at ${destination.name}.`;
-  speakImmediateMessage(`You have arrived at ${destination.name}.`);
+  announceArrival(destination);
 }
 
 function startLiveLocationWatch() {
