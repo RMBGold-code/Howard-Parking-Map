@@ -295,7 +295,7 @@ function hostedAppUrl() {
 }
 
 function installAppUrl() {
-  return "https://rmbgold-code.github.io/Howard-Parking-Map/";
+  return "https://howarddclandmarks.netlify.app/";
 }
 
 function setAppActionStatus(message) {
