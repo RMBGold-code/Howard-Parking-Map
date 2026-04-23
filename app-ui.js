@@ -887,6 +887,7 @@ voiceGuidanceButton?.addEventListener("click", toggleVoiceGuidance);
 mapUseLocationButton?.addEventListener("click", requestCurrentLocation);
 mapNavigateButton?.addEventListener("click", fetchTurnByTurnRoute);
 mapVoiceGuidanceButton?.addEventListener("click", toggleVoiceGuidance);
+document.getElementById("mapRecenterButton")?.addEventListener("click", resumeFollowViewport);
 clearSelectionButton.addEventListener("click", clearSelection);
 landmarkInfoButton?.addEventListener("click", (event) => {
   event.stopPropagation();

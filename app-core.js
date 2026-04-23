@@ -34,6 +34,7 @@ const routeSteps = document.getElementById("routeSteps");
 const mapUseLocationButton = document.getElementById("mapUseLocationButton");
 const mapNavigateButton = document.getElementById("mapNavigateButton");
 const mapVoiceGuidanceButton = document.getElementById("mapVoiceGuidanceButton");
+const mapRecenterButton = document.getElementById("mapRecenterButton");
 const routeModeButtons = [...document.querySelectorAll("[data-route-mode]")];
 const legendButtons = [...document.querySelectorAll(".legend-chip")];
 const mapButtons = [...document.querySelectorAll("[data-view]")];
@@ -69,9 +70,11 @@ const mapState = {
   routeRequestKeyPending: "",
   lastRouteRequestAt: 0,
   navigationFollowMode: false,
+  followViewportSuspended: false,
   geolocationWatchId: null,
   lastRouteRefreshAt: 0,
   lastRouteRefreshPoint: null,
+  programmaticMapMoveCount: 0,
   lastUserMarkerTapAt: 0,
   voiceGuidanceEnabled: false,
   lastSpokenInstructionKey: "",
@@ -560,6 +563,19 @@ function syncNavigationActivityUI(destination = selectedNavigationTarget(), orig
   });
 
   syncMapTurnBanner(destination, origin);
+}
+
+function syncRecenterButton() {
+  if (!mapRecenterButton) {
+    return;
+  }
+
+  const showButton = Boolean(
+    mapState.navigationActive
+    && mapState.navigationFollowMode
+    && mapState.followViewportSuspended
+  );
+  mapRecenterButton.classList.toggle("is-hidden", !showButton);
 }
 
 function canUseVoiceGuidance() {
@@ -1100,6 +1116,7 @@ function updateNavigationUI() {
   navigateButton.textContent = parkingSpot ? "Navigate to selected parking" : "Navigate to selected";
   syncNavigationActivityUI(destination, origin);
   syncVoiceGuidanceButton();
+  syncRecenterButton();
 
   navigateButton.disabled = !(origin && destination);
   if (mapNavigateButton) {
@@ -1208,12 +1225,53 @@ function stopLocationWatch() {
 
 function disableNavigationFollowMode() {
   mapState.navigationFollowMode = false;
+  mapState.followViewportSuspended = false;
   mapState.lastRouteRefreshAt = 0;
   mapState.lastRouteRefreshPoint = null;
+  syncRecenterButton();
 }
 
-function syncFollowViewport() {
+function beginProgrammaticMapMove() {
+  mapState.programmaticMapMoveCount += 1;
+}
+
+function endProgrammaticMapMove() {
+  if (mapState.programmaticMapMoveCount > 0) {
+    mapState.programmaticMapMoveCount -= 1;
+  }
+}
+
+function suspendFollowViewportForManualMapMove() {
+  if (!mapState.navigationActive || !mapState.navigationFollowMode) {
+    return;
+  }
+
+  mapState.followViewportSuspended = true;
+  navigationStatus.textContent = "Map follow is paused while you explore. Tap Recenter to return to your live position.";
+  syncRecenterButton();
+}
+
+function resumeFollowViewport() {
+  if (!mapState.navigationFollowMode) {
+    return;
+  }
+
+  mapState.followViewportSuspended = false;
+  syncRecenterButton();
+  syncFollowViewport({ force: true });
+  const destination = selectedNavigationTarget();
+  if (destination) {
+    navigationStatus.textContent = `${routeModeLabel(mapState.routeMode)} follow mode is active for ${destination.name}.`;
+  }
+}
+
+function syncFollowViewport(options = {}) {
+  const { force = false } = options;
   if (!mapState.navigationFollowMode || !mapState.map || !mapState.currentLocation) {
+    return;
+  }
+
+  if (mapState.followViewportSuspended && !force) {
     return;
   }
 
@@ -1222,12 +1280,14 @@ function syncFollowViewport() {
   const targetZoom = Math.max(currentZoom, FOLLOW_NAVIGATION_ZOOM);
 
   if (targetZoom > currentZoom) {
+    beginProgrammaticMapMove();
     mapState.map.flyTo(latLng, targetZoom, {
       duration: 0.7
     });
     return;
   }
 
+  beginProgrammaticMapMove();
   mapState.map.panTo(latLng, {
     animate: true,
     duration: 0.7,
@@ -1355,6 +1415,7 @@ function activateNavigationFollowMode() {
   }
 
   mapState.navigationFollowMode = true;
+  mapState.followViewportSuspended = false;
   setBasemap("street");
   mapState.lastRouteRefreshAt = Date.now();
   mapState.lastRouteRefreshPoint = mapState.currentLocation
@@ -1980,6 +2041,17 @@ function createMap() {
     street: streetLayer,
     imagery: imageryLayer
   };
+
+  map.on("moveend zoomend", () => {
+    endProgrammaticMapMove();
+  });
+
+  map.on("dragstart zoomstart", () => {
+    if (mapState.programmaticMapMoveCount > 0) {
+      return;
+    }
+    suspendFollowViewportForManualMapMove();
+  });
 
   buildings.forEach((building) => {
     const point = buildingPoint(building);

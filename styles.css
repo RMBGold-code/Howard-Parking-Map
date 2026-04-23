@@ -830,6 +830,30 @@ body {
   display: none;
 }
 
+.map-recenter-button {
+  position: absolute;
+  right: 14px;
+  bottom: 170px;
+  z-index: 705;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(15, 43, 71, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #103b4d;
+  font: 800 0.9rem/1 "Bahnschrift SemiCondensed", "Arial Narrow", sans-serif;
+  letter-spacing: 0.03em;
+  box-shadow: 0 14px 28px rgba(16, 35, 30, 0.18);
+  cursor: pointer;
+}
+
+.map-recenter-button.is-hidden {
+  display: none;
+}
+
 .map-turn-icon {
   display: inline-flex;
   align-items: center;
@@ -889,6 +913,10 @@ body {
   z-index: 700;
   display: grid;
   gap: 10px;
+}
+
+.is-installed-app .map-recenter-button {
+  bottom: 170px;
 }
 
 .is-installed-app .hero-brand-row {
