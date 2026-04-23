@@ -95,14 +95,17 @@ const DRIVING_ROUTE_SERVICES = [
   }
 ];
 
-const ROUTE_REQUEST_SPACING_MS = 250;
-const ROUTE_REQUEST_TIMEOUT_MS = 4500;
-const FOLLOW_NAVIGATION_ZOOM = 20;
-const FOLLOW_ROUTE_REFRESH_MS = 6000;
-const FOLLOW_ROUTE_REFRESH_MILES = 0.02;
+const ROUTE_REQUEST_SPACING_MS = 100;
+const ROUTE_REQUEST_TIMEOUT_MS = 3200;
+const FOLLOW_NAVIGATION_ZOOM = 19;
+const FOLLOW_ROUTE_REFRESH_MS = 2600;
+const FOLLOW_ROUTE_REFRESH_MILES = 0.012;
 const DOUBLE_TAP_WINDOW_MS = 360;
 const ARRIVAL_PROMPT_THRESHOLD_MILES = 0.05;
-const OFF_ROUTE_REROUTE_THRESHOLD_MILES = 0.045;
+const OFF_ROUTE_REROUTE_THRESHOLD_MILES = 0.02;
+const OFF_ROUTE_REROUTE_MIN_MS = 1200;
+const MAP_FOLLOW_ANIMATION_SECONDS = 0.35;
+const MAP_CONTEXT_FLY_SECONDS = 0.45;
 const CAMPUS_VIEW_CATEGORIES = new Set([
   "health-sciences",
   "library-admin",
@@ -930,7 +933,7 @@ function selectParkingSpot(id, moveMap = false, snapToMap = false) {
   const spot = selectedParking();
   if (moveMap && spot && mapState.map) {
     mapState.map.flyTo([spot.lat, spot.lng], Math.max(mapState.map.getZoom(), 18), {
-      duration: 0.7
+      duration: MAP_CONTEXT_FLY_SECONDS
     });
     const entry = mapState.parkingMarkers.find((markerEntry) => markerEntry.id === id);
     entry?.marker.openPopup();
@@ -1011,7 +1014,7 @@ function fitDestinationAndParkingPoints(destination, parkingSpots) {
   ];
 
   if (points.length === 1) {
-    mapState.map.flyTo(points[0], Math.max(mapState.map.getZoom(), 16), { duration: 0.7 });
+    mapState.map.flyTo(points[0], Math.max(mapState.map.getZoom(), 16), { duration: MAP_CONTEXT_FLY_SECONDS });
     return;
   }
 
@@ -1282,7 +1285,7 @@ function syncFollowViewport(options = {}) {
   if (targetZoom > currentZoom) {
     beginProgrammaticMapMove();
     mapState.map.flyTo(latLng, targetZoom, {
-      duration: 0.7
+      duration: MAP_FOLLOW_ANIMATION_SECONDS
     });
     return;
   }
@@ -1290,7 +1293,7 @@ function syncFollowViewport(options = {}) {
   beginProgrammaticMapMove();
   mapState.map.panTo(latLng, {
     animate: true,
-    duration: 0.7,
+    duration: MAP_FOLLOW_ANIMATION_SECONDS,
     noMoveStart: true
   });
 }
@@ -1310,11 +1313,12 @@ function maybeRefreshFollowRoute(previousLocation, nextLocation) {
 
   const referencePoint = mapState.lastRouteRefreshPoint || previousLocation || nextLocation;
   const movedMiles = distanceMiles(referencePoint, nextLocation);
-  const enoughTime = (Date.now() - mapState.lastRouteRefreshAt) >= FOLLOW_ROUTE_REFRESH_MS;
   const offRouteMiles = mapState.routeData
     ? distanceFromPointToRouteMiles(nextLocation, mapState.routeData)
     : Number.POSITIVE_INFINITY;
   const isOffRoute = Number.isFinite(offRouteMiles) && offRouteMiles >= OFF_ROUTE_REROUTE_THRESHOLD_MILES;
+  const refreshWindowMs = isOffRoute ? OFF_ROUTE_REROUTE_MIN_MS : FOLLOW_ROUTE_REFRESH_MS;
+  const enoughTime = (Date.now() - mapState.lastRouteRefreshAt) >= refreshWindowMs;
 
   if ((!mapState.routeData || movedMiles >= FOLLOW_ROUTE_REFRESH_MILES || isOffRoute) && enoughTime && !mapState.routeRequestKeyPending) {
     if (isOffRoute) {
@@ -1402,8 +1406,8 @@ function startLiveLocationWatch() {
     },
     {
       enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 3000
+      timeout: 10000,
+      maximumAge: 1200
     }
   );
 }
@@ -1896,7 +1900,7 @@ function requestCurrentLocation() {
       } else if (mapState.map) {
         navigationStatus.textContent = `Location updated.${accuracyText} Live tracking is on. Select a destination to navigate.`;
         mapState.map.flyTo([latitude, longitude], Math.max(mapState.map.getZoom(), 16), {
-          duration: 0.7
+          duration: MAP_CONTEXT_FLY_SECONDS
         });
       }
     },
@@ -1905,7 +1909,7 @@ function requestCurrentLocation() {
     },
     {
       enableHighAccuracy: true,
-      timeout: 15000,
+      timeout: 9000,
       maximumAge: 0
     }
   );
@@ -2208,7 +2212,7 @@ function focusBuildingOnMap(building) {
   }
 
   mapState.map.flyTo([point.lat, point.lng], Math.max(mapState.map.getZoom(), 18), {
-    duration: 0.7
+    duration: MAP_CONTEXT_FLY_SECONDS
   });
   layer.openPopup();
   bounceLandmarkMarker(layer);
