@@ -1,6 +1,7 @@
 function selectBuilding(name, moveMap = false, snapToMap = false) {
   selectedBuildingName = name;
   mapState.selectedParkingId = "";
+  resetArrivalState();
   resetArrivalParkingPrompt();
   disableNavigationFollowMode();
   mapState.navigationActive = false;

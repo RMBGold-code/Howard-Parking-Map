@@ -81,7 +81,8 @@ const mapState = {
   activeGuidanceStepIndex: -1,
   lastGuidanceAdvanceAt: 0,
   arrivalParkingPromptKey: "",
-  parkingPromptInFlight: false
+  parkingPromptInFlight: false,
+  arrivedDestinationKey: ""
 };
 
 const DRIVING_ROUTE_SERVICES = [
@@ -852,6 +853,22 @@ function selectedNavigationTarget() {
   return selectedParking() || selectedBuilding();
 }
 
+function navigationDestinationKey(destination = selectedNavigationTarget()) {
+  if (!destination) {
+    return "";
+  }
+
+  const roundedLat = Number(destination.lat).toFixed(5);
+  const roundedLng = Number(destination.lng).toFixed(5);
+  return mapState.selectedParkingId
+    ? `parking:${mapState.selectedParkingId}|${roundedLat}|${roundedLng}`
+    : `destination:${destination.name}|${roundedLat}|${roundedLng}`;
+}
+
+function resetArrivalState() {
+  mapState.arrivedDestinationKey = "";
+}
+
 function resetArrivalParkingPrompt() {
   mapState.arrivalParkingPromptKey = "";
   mapState.parkingPromptInFlight = false;
@@ -919,6 +936,7 @@ function syncParkingSelection() {
 
 function selectParkingSpot(id, moveMap = false, snapToMap = false) {
   mapState.selectedParkingId = id;
+  resetArrivalState();
   resetArrivalParkingPrompt();
   disableNavigationFollowMode();
   mapState.navigationActive = false;
@@ -1058,6 +1076,7 @@ function showParkingMarkers(destination, parkingSpots) {
 
 function setRouteMode(mode) {
   mapState.routeMode = mode === "driving" ? "driving" : "walking";
+  resetArrivalState();
   disableNavigationFollowMode();
   mapState.navigationActive = false;
   mapState.navigationFallbackMessage = "";
@@ -1115,6 +1134,7 @@ function updateNavigationUI() {
   const origin = mapState.currentLocation;
   const parkingSpot = selectedParking();
   const currentRouteKey = buildRouteKey(origin, destination, mapState.routeMode);
+  const destinationKey = navigationDestinationKey(destination);
 
   navigateButton.textContent = parkingSpot ? "Navigate to selected parking" : "Navigate to selected";
   syncNavigationActivityUI(destination, origin);
@@ -1157,6 +1177,11 @@ function updateNavigationUI() {
     return;
   }
 
+  if (mapState.arrivedDestinationKey && mapState.arrivedDestinationKey === destinationKey) {
+    navigationStatus.textContent = `You have arrived at ${destination.name}.`;
+    return;
+  }
+
   if (mapState.routeData && mapState.routeKey === currentRouteKey) {
     if (mapState.navigationFollowMode) {
       navigationStatus.textContent = `${routeModeLabel(mapState.routeMode)} follow mode is active for ${destination.name}.`;
@@ -1184,6 +1209,7 @@ function updateNavigationUI() {
 function clearSelection() {
   selectedBuildingName = "";
   mapState.selectedParkingId = "";
+  resetArrivalState();
   resetArrivalParkingPrompt();
   disableNavigationFollowMode();
   mapState.navigationActive = false;
@@ -1382,6 +1408,30 @@ async function maybePromptForParkingAfterArrival(currentLocation) {
   }
 }
 
+function maybeAnnounceArrival(currentLocation) {
+  if (!mapState.navigationActive) {
+    return;
+  }
+
+  const destination = selectedNavigationTarget();
+  if (!destination || !currentLocation) {
+    return;
+  }
+
+  if (distanceMiles(currentLocation, destination) > ARRIVAL_PROMPT_THRESHOLD_MILES) {
+    return;
+  }
+
+  const destinationKey = navigationDestinationKey(destination);
+  if (!destinationKey || mapState.arrivedDestinationKey === destinationKey) {
+    return;
+  }
+
+  mapState.arrivedDestinationKey = destinationKey;
+  navigationStatus.textContent = `You have arrived at ${destination.name}.`;
+  speakImmediateMessage(`You have arrived at ${destination.name}.`);
+}
+
 function startLiveLocationWatch() {
   if (!("geolocation" in navigator) || mapState.geolocationWatchId !== null) {
     return;
@@ -1528,6 +1578,7 @@ function setCurrentLocation(lat, lng, accuracy = 0, options = {}) {
   }
 
   maybeAdvanceVoiceGuidance(mapState.currentLocation);
+  maybeAnnounceArrival(mapState.currentLocation);
   maybePromptForParkingAfterArrival(mapState.currentLocation);
   updateNavigationUI();
 }
@@ -1804,6 +1855,7 @@ async function fetchTurnByTurnRoute() {
     return;
   }
 
+  resetArrivalState();
   const wasNavigating = mapState.navigationActive;
   mapState.navigationActive = true;
   if (mapState.map && mapState.currentLocation) {
