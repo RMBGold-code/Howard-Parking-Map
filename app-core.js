@@ -98,8 +98,13 @@ const DRIVING_ROUTE_SERVICES = [
 ];
 
 const BASEMAP_MAX_ZOOM = {
+  street: 20,
+  imagery: 20
+};
+
+const BASEMAP_NATIVE_ZOOM = {
   street: 19,
-  imagery: 18
+  imagery: 19
 };
 
 const ROUTE_REQUEST_SPACING_MS = 100;
@@ -2147,19 +2152,18 @@ function createMap() {
   map.createPane("routeHighlightPane");
   map.getPane("routeHighlightPane").style.zIndex = "430";
 
-  const streetLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-    subdomains: "abcd",
+  const streetLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: BASEMAP_MAX_ZOOM.street,
-    maxNativeZoom: BASEMAP_MAX_ZOOM.street,
-    detectRetina: true,
+    maxNativeZoom: BASEMAP_NATIVE_ZOOM.street,
+    detectRetina: false,
     updateWhenZooming: false,
     keepBuffer: 4,
-    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+    attribution: "&copy; OpenStreetMap contributors"
   });
 
   const imageryLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
     maxZoom: BASEMAP_MAX_ZOOM.imagery,
-    maxNativeZoom: BASEMAP_MAX_ZOOM.imagery,
+    maxNativeZoom: BASEMAP_NATIVE_ZOOM.imagery,
     detectRetina: false,
     updateWhenZooming: false,
     keepBuffer: 4,
