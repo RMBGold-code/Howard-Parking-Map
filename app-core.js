@@ -2134,7 +2134,7 @@ function createMap() {
     zoomControl: false,
     scrollWheelZoom: true,
     minZoom: 12,
-    maxZoom: 20,
+    maxZoom: 19,
     preferCanvas: true
   });
   map.setView(campusCenter, 16);
@@ -2144,8 +2144,8 @@ function createMap() {
 
   const streetLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
     subdomains: "abcd",
-    maxZoom: 20,
-    maxNativeZoom: 20,
+    maxZoom: 19,
+    maxNativeZoom: 19,
     detectRetina: true,
     updateWhenZooming: false,
     keepBuffer: 4,
@@ -2153,7 +2153,7 @@ function createMap() {
   });
 
   const imageryLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-    maxZoom: 20,
+    maxZoom: 19,
     maxNativeZoom: 19,
     detectRetina: true,
     updateWhenZooming: false,
