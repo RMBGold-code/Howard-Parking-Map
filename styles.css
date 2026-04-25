@@ -667,6 +667,23 @@ body {
 
 .leaflet-container {
   font-family: Aptos, "Segoe UI", sans-serif;
+  background: #e5edf4;
+}
+
+.leaflet-map .leaflet-tile-pane {
+  transition: filter 180ms ease;
+}
+
+.leaflet-map .leaflet-tile {
+  image-rendering: auto;
+}
+
+.leaflet-map[data-basemap="street"] .leaflet-tile-pane {
+  filter: saturate(1.08) contrast(1.16) brightness(1.02);
+}
+
+.leaflet-map[data-basemap="imagery"] .leaflet-tile-pane {
+  filter: saturate(1.05) contrast(1.08) brightness(1.03);
 }
 
 .leaflet-control-attribution {

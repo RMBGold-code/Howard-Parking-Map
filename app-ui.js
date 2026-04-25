@@ -62,6 +62,9 @@ function setBasemap(style) {
   });
 
   mapState.activeBase = style;
+  if (mapCanvas) {
+    mapCanvas.dataset.basemap = style;
+  }
   styleButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.style === style);
   });

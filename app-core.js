@@ -62,6 +62,7 @@ const mapState = {
   userAccuracyRing: null,
   navigationLine: null,
   navigationLineHalo: null,
+  navigationLineCore: null,
   navigationActive: false,
   navigationFallbackMessage: "",
   routeMode: "driving",
@@ -1118,7 +1119,7 @@ function setRouteMode(mode) {
 function clearNavigationGuide() {
   mapState.routeData = null;
   mapState.routeKey = "";
-  if (!mapState.map || (!mapState.navigationLine && !mapState.navigationLineHalo)) {
+  if (!mapState.map || (!mapState.navigationLine && !mapState.navigationLineHalo && !mapState.navigationLineCore)) {
     clearRouteDetails();
     return;
   }
@@ -1130,6 +1131,10 @@ function clearNavigationGuide() {
   if (mapState.navigationLine) {
     mapState.map.removeLayer(mapState.navigationLine);
     mapState.navigationLine = null;
+  }
+  if (mapState.navigationLineCore) {
+    mapState.map.removeLayer(mapState.navigationLineCore);
+    mapState.navigationLineCore = null;
   }
   clearRouteDetails();
 }
@@ -1637,37 +1642,53 @@ function renderNavigationLine(points, options = {}) {
 
   const haloStyle = dashed
     ? {
-      color: "rgba(16, 59, 77, 0.12)",
-      weight: 8,
-      opacity: 0.28,
+      color: "rgba(13, 90, 141, 0.14)",
+      weight: 10,
+      opacity: 0.34,
       dashArray: "10 10",
       lineCap: "round",
-      lineJoin: "round"
+      lineJoin: "round",
+      pane: "routeHighlightPane"
     }
     : {
-      color: "#d7eefc",
-      weight: 13,
-      opacity: 0.95,
+      color: "#eff9ff",
+      weight: 22,
+      opacity: 0.98,
       lineCap: "round",
-      lineJoin: "round"
+      lineJoin: "round",
+      pane: "routeHighlightPane"
     };
 
   const lineStyle = dashed
     ? {
       color: "#103b4d",
-      weight: 4,
-      opacity: 0.8,
+      weight: 4.5,
+      opacity: 0.84,
       dashArray: "10 10",
       lineCap: "round",
-      lineJoin: "round"
+      lineJoin: "round",
+      pane: "routeHighlightPane"
     }
     : {
-      color: "#0d5a8d",
-      weight: 7,
-      opacity: 0.96,
+      color: "#1979c7",
+      weight: 15,
+      opacity: 0.94,
       dashArray: null,
       lineCap: "round",
-      lineJoin: "round"
+      lineJoin: "round",
+      pane: "routeHighlightPane"
+    };
+
+  const coreStyle = dashed
+    ? null
+    : {
+      color: "#fff6c7",
+      weight: 7,
+      opacity: 0.98,
+      dashArray: null,
+      lineCap: "round",
+      lineJoin: "round",
+      pane: "routeHighlightPane"
     };
 
   if (!mapState.navigationLineHalo) {
@@ -1683,6 +1704,22 @@ function renderNavigationLine(points, options = {}) {
     mapState.navigationLine.setStyle(lineStyle);
     mapState.navigationLine.setLatLngs(points);
   }
+
+  if (coreStyle) {
+    if (!mapState.navigationLineCore) {
+      mapState.navigationLineCore = L.polyline(points, coreStyle).addTo(mapState.map);
+    } else {
+      mapState.navigationLineCore.setStyle(coreStyle);
+      mapState.navigationLineCore.setLatLngs(points);
+    }
+    mapState.navigationLineCore.bringToFront();
+  } else if (mapState.navigationLineCore) {
+    mapState.map.removeLayer(mapState.navigationLineCore);
+    mapState.navigationLineCore = null;
+  }
+
+  mapState.navigationLineHalo.bringToFront();
+  mapState.navigationLine.bringToFront();
 
   if (fitBounds) {
     mapState.map.fitBounds(points, { padding: [32, 32] });
@@ -2097,25 +2134,37 @@ function createMap() {
     zoomControl: false,
     scrollWheelZoom: true,
     minZoom: 12,
-    maxZoom: 20
+    maxZoom: 20,
+    preferCanvas: true
   });
   map.setView(campusCenter, 16);
   L.control.zoom({ position: "topright" }).addTo(map);
+  map.createPane("routeHighlightPane");
+  map.getPane("routeHighlightPane").style.zIndex = "430";
 
-  const streetLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+  const streetLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
     subdomains: "abcd",
     maxZoom: 20,
     maxNativeZoom: 20,
+    detectRetina: true,
+    updateWhenZooming: false,
+    keepBuffer: 4,
     attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
   });
 
   const imageryLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
     maxZoom: 20,
     maxNativeZoom: 19,
+    detectRetina: true,
+    updateWhenZooming: false,
+    keepBuffer: 4,
     attribution: "Sources: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
   });
 
   streetLayer.addTo(map);
+  if (mapCanvas) {
+    mapCanvas.dataset.basemap = "street";
+  }
   mapState.map = map;
   mapState.baseLayers = {
     street: streetLayer,
