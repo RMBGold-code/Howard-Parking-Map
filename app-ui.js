@@ -62,6 +62,11 @@ function setBasemap(style) {
   });
 
   mapState.activeBase = style;
+  const maxZoom = BASEMAP_MAX_ZOOM[style] || BASEMAP_MAX_ZOOM.street;
+  mapState.map.setMaxZoom(maxZoom);
+  if (mapState.map.getZoom() > maxZoom) {
+    mapState.map.setZoom(maxZoom);
+  }
   if (mapCanvas) {
     mapCanvas.dataset.basemap = style;
   }

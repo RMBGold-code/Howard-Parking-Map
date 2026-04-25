@@ -176,8 +176,8 @@
           <button class="map-jump" data-view="all">All mapped landmarks</button>
         </div>
         <div class="map-toolbar" aria-label="Basemap styles">
-          <button class="map-jump map-style is-active" data-style="imagery">Aerial imagery</button>
-          <button class="map-jump map-style" data-style="street">Street map</button>
+          <button class="map-jump map-style" data-style="imagery">Aerial imagery</button>
+          <button class="map-jump map-style is-active" data-style="street">Street map</button>
         </div>
         <form id="buildingFinder" class="building-finder" aria-label="Find parking near a destination">
           <label class="sr-only" for="buildingSearchBox">Enter a destination to find nearby parking</label>
@@ -224,7 +224,7 @@
         </div>
         <div id="appMapNavigationBanner" class="nav-active-banner app-map-nav-banner is-hidden" aria-live="polite"></div>
         <p class="tile-note">
-          The basemap loads from the internet. Aerial mode can usually zoom deeper than the street view where high-resolution imagery is available.
+          The basemap loads from the internet. Street mode is tuned for the clearest close-in navigation view, while aerial mode may stop a bit sooner depending on imagery coverage.
         </p>
       </section>
 
@@ -302,7 +302,7 @@
 
   <script src="vendor/leaflet.js?v=66"></script>
   <script src="app-data.js?v=87"></script>
-  <script src="app-core.js?v=95"></script>
-  <script src="app-ui.js?v=93"></script>
+  <script src="app-core.js?v=96"></script>
+  <script src="app-ui.js?v=94"></script>
 </body>
 </html>

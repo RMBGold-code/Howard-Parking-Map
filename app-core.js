@@ -97,6 +97,11 @@ const DRIVING_ROUTE_SERVICES = [
   }
 ];
 
+const BASEMAP_MAX_ZOOM = {
+  street: 19,
+  imagery: 18
+};
+
 const ROUTE_REQUEST_SPACING_MS = 100;
 const ROUTE_REQUEST_TIMEOUT_MS = 3200;
 const FOLLOW_NAVIGATION_ZOOM = 19;
@@ -2134,7 +2139,7 @@ function createMap() {
     zoomControl: false,
     scrollWheelZoom: true,
     minZoom: 12,
-    maxZoom: 19,
+    maxZoom: BASEMAP_MAX_ZOOM.street,
     preferCanvas: true
   });
   map.setView(campusCenter, 16);
@@ -2144,8 +2149,8 @@ function createMap() {
 
   const streetLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
     subdomains: "abcd",
-    maxZoom: 19,
-    maxNativeZoom: 19,
+    maxZoom: BASEMAP_MAX_ZOOM.street,
+    maxNativeZoom: BASEMAP_MAX_ZOOM.street,
     detectRetina: true,
     updateWhenZooming: false,
     keepBuffer: 4,
@@ -2153,9 +2158,9 @@ function createMap() {
   });
 
   const imageryLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-    maxZoom: 19,
-    maxNativeZoom: 19,
-    detectRetina: true,
+    maxZoom: BASEMAP_MAX_ZOOM.imagery,
+    maxNativeZoom: BASEMAP_MAX_ZOOM.imagery,
+    detectRetina: false,
     updateWhenZooming: false,
     keepBuffer: 4,
     attribution: "Sources: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
