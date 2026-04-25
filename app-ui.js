@@ -53,12 +53,15 @@ function setBasemap(style) {
     return;
   }
 
-  Object.entries(mapState.baseLayers).forEach(([name, layer]) => {
-    if (name === style) {
-      layer.addTo(mapState.map);
-    } else if (mapState.map.hasLayer(layer)) {
-      mapState.map.removeLayer(layer);
-    }
+  Object.entries(mapState.baseLayers).forEach(([name, layerOrLayers]) => {
+    const layers = Array.isArray(layerOrLayers) ? layerOrLayers : [layerOrLayers];
+    layers.forEach((layer) => {
+      if (name === style) {
+        layer.addTo(mapState.map);
+      } else if (mapState.map.hasLayer(layer)) {
+        mapState.map.removeLayer(layer);
+      }
+    });
   });
 
   mapState.activeBase = style;

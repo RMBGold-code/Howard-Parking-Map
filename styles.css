@@ -683,7 +683,7 @@ body {
 }
 
 .leaflet-map[data-basemap="imagery"] .leaflet-tile-pane {
-  filter: saturate(1.05) contrast(1.08) brightness(1.03);
+  filter: saturate(1.1) contrast(1.16) brightness(1.04);
 }
 
 .leaflet-control-attribution {

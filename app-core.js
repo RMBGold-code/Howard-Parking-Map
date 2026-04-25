@@ -2151,6 +2151,8 @@ function createMap() {
   L.control.zoom({ position: "topright" }).addTo(map);
   map.createPane("routeHighlightPane");
   map.getPane("routeHighlightPane").style.zIndex = "430";
+  map.createPane("imageryReferencePane");
+  map.getPane("imageryReferencePane").style.zIndex = "235";
 
   const streetLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: BASEMAP_MAX_ZOOM.street,
@@ -2164,10 +2166,21 @@ function createMap() {
   const imageryLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
     maxZoom: BASEMAP_MAX_ZOOM.imagery,
     maxNativeZoom: BASEMAP_NATIVE_ZOOM.imagery,
+    detectRetina: true,
+    updateWhenZooming: false,
+    keepBuffer: 6,
+    attribution: "Sources: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+  });
+
+  const imageryReferenceLayer = L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: BASEMAP_MAX_ZOOM.imagery,
+    maxNativeZoom: BASEMAP_NATIVE_ZOOM.imagery,
     detectRetina: false,
     updateWhenZooming: false,
-    keepBuffer: 4,
-    attribution: "Sources: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+    keepBuffer: 6,
+    pane: "imageryReferencePane",
+    opacity: 0.92,
+    attribution: "Sources: Esri"
   });
 
   streetLayer.addTo(map);
@@ -2177,7 +2190,7 @@ function createMap() {
   mapState.map = map;
   mapState.baseLayers = {
     street: streetLayer,
-    imagery: imageryLayer
+    imagery: [imageryLayer, imageryReferenceLayer]
   };
 
   map.on("moveend zoomend", () => {
