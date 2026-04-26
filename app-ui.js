@@ -73,6 +73,9 @@ function setBasemap(style) {
   if (mapCanvas) {
     mapCanvas.dataset.basemap = style;
   }
+  if (typeof syncTrafficAwarenessOverlay === "function") {
+    syncTrafficAwarenessOverlay();
+  }
   styleButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.style === style);
   });

@@ -686,6 +686,46 @@ body {
   filter: saturate(1.1) contrast(1.16) brightness(1.04);
 }
 
+.traffic-signal-marker-wrap {
+  background: transparent;
+  border: 0;
+}
+
+.traffic-signal-marker {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 14px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(9, 18, 28, 0.82);
+  background: rgba(8, 16, 24, 0.94);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.32);
+}
+
+.traffic-signal-light {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.38);
+}
+
+.traffic-signal-light-red {
+  background: #ff6258;
+}
+
+.traffic-signal-light-yellow {
+  background: #ffd14f;
+}
+
+.traffic-signal-light-green {
+  background: #4cd964;
+}
+
 .leaflet-control-attribution {
   font-size: 0.74rem;
 }

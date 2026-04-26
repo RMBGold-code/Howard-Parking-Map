@@ -83,7 +83,14 @@ const mapState = {
   lastGuidanceAdvanceAt: 0,
   arrivalParkingPromptKey: "",
   parkingPromptInFlight: false,
-  arrivedDestinationKey: ""
+  arrivedDestinationKey: "",
+  trafficSignalMarkers: [],
+  speedCameraPoints: [],
+  routeAwarenessKey: "",
+  routeAwarenessRequestKeyPending: "",
+  lastSpeedCameraAlertKey: "",
+  lastSpeedCameraAlertAt: 0,
+  alertAudioContext: null
 };
 
 const DRIVING_ROUTE_SERVICES = [
@@ -95,6 +102,11 @@ const DRIVING_ROUTE_SERVICES = [
     name: "router.project-osrm.org",
     routeBase: "https://router.project-osrm.org/route/v1/driving"
   }
+];
+
+const ROUTE_AWARENESS_SERVICES = [
+  "https://overpass-api.de/api/interpreter",
+  "https://lz4.overpass-api.de/api/interpreter"
 ];
 
 const BASEMAP_MAX_ZOOM = {
@@ -116,6 +128,12 @@ const DOUBLE_TAP_WINDOW_MS = 360;
 const ARRIVAL_PROMPT_THRESHOLD_MILES = 0.05;
 const OFF_ROUTE_REROUTE_THRESHOLD_MILES = 0.02;
 const OFF_ROUTE_REROUTE_MIN_MS = 1200;
+const ROUTE_AWARENESS_BBOX_BUFFER_DEGREES = 0.0024;
+const TRAFFIC_SIGNAL_ROUTE_THRESHOLD_MILES = 0.03;
+const SPEED_CAMERA_ROUTE_THRESHOLD_MILES = 0.045;
+const SPEED_CAMERA_ALERT_THRESHOLD_MILES = 0.11;
+const SPEED_CAMERA_ALERT_RELEASE_THRESHOLD_MILES = 0.15;
+const SPEED_CAMERA_ALERT_COOLDOWN_MS = 25000;
 const MAP_FOLLOW_ANIMATION_SECONDS = 0.35;
 const MAP_CONTEXT_FLY_SECONDS = 0.45;
 const CAMPUS_VIEW_CATEGORIES = new Set([
@@ -931,6 +949,329 @@ function buildingPoint(building) {
   return normalizePoint(building?.lat, building?.lng);
 }
 
+function routeGeometryPoints(route) {
+  return (route?.geometry?.coordinates || [])
+    .map(([lng, lat]) => normalizePoint(lat, lng))
+    .filter(Boolean);
+}
+
+function routeBoundingBox(route) {
+  const points = routeGeometryPoints(route);
+  if (!points.length) {
+    return null;
+  }
+
+  const bounds = points.reduce((accumulator, point) => ({
+    south: Math.min(accumulator.south, point.lat),
+    west: Math.min(accumulator.west, point.lng),
+    north: Math.max(accumulator.north, point.lat),
+    east: Math.max(accumulator.east, point.lng)
+  }), {
+    south: points[0].lat,
+    west: points[0].lng,
+    north: points[0].lat,
+    east: points[0].lng
+  });
+
+  return {
+    south: bounds.south - ROUTE_AWARENESS_BBOX_BUFFER_DEGREES,
+    west: bounds.west - ROUTE_AWARENESS_BBOX_BUFFER_DEGREES,
+    north: bounds.north + ROUTE_AWARENESS_BBOX_BUFFER_DEGREES,
+    east: bounds.east + ROUTE_AWARENESS_BBOX_BUFFER_DEGREES
+  };
+}
+
+function trafficAwarenessQuery(route) {
+  const bounds = routeBoundingBox(route);
+  if (!bounds) {
+    return "";
+  }
+
+  return `
+[out:json][timeout:12];
+(
+  node["highway"="traffic_signals"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
+  node["highway"="speed_camera"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
+  node["enforcement"="maxspeed"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
+);
+out body;
+  `.trim();
+}
+
+function awarenessFeatureKey(point, prefix) {
+  return `${prefix}:${point.lat.toFixed(6)},${point.lng.toFixed(6)}`;
+}
+
+function distanceFromPointToRouteFeatureMiles(featurePoint, route, thresholdMiles) {
+  const routeDistance = distanceFromPointToRouteMiles(featurePoint, route);
+  return Number.isFinite(routeDistance) && routeDistance <= thresholdMiles
+    ? routeDistance
+    : Number.POSITIVE_INFINITY;
+}
+
+async function requestRouteAwarenessData(query) {
+  let lastError = null;
+
+  for (const service of ROUTE_AWARENESS_SERVICES) {
+    try {
+      const response = await fetch(service, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "text/plain;charset=UTF-8"
+        },
+        body: query
+      });
+
+      if (!response.ok) {
+        throw new Error(`status ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Route awareness data is unavailable");
+}
+
+function filterRouteAwarenessFeatures(elements, route) {
+  const trafficSignals = [];
+  const speedCameras = [];
+
+  (elements || []).forEach((element) => {
+    const point = normalizePoint(element?.lat, element?.lon);
+    if (!point) {
+      return;
+    }
+
+    const tags = element.tags || {};
+    if (tags.highway === "traffic_signals") {
+      const routeDistance = distanceFromPointToRouteFeatureMiles(point, route, TRAFFIC_SIGNAL_ROUTE_THRESHOLD_MILES);
+      if (Number.isFinite(routeDistance)) {
+        trafficSignals.push({
+          ...point,
+          key: awarenessFeatureKey(point, "signal"),
+          routeDistance
+        });
+      }
+      return;
+    }
+
+    const isSpeedCamera = tags.highway === "speed_camera" || tags.enforcement === "maxspeed";
+    if (!isSpeedCamera) {
+      return;
+    }
+
+    const routeDistance = distanceFromPointToRouteFeatureMiles(point, route, SPEED_CAMERA_ROUTE_THRESHOLD_MILES);
+    if (Number.isFinite(routeDistance)) {
+      speedCameras.push({
+        ...point,
+        key: awarenessFeatureKey(point, "camera"),
+        routeDistance
+      });
+    }
+  });
+
+  trafficSignals.sort((left, right) => left.routeDistance - right.routeDistance);
+  speedCameras.sort((left, right) => left.routeDistance - right.routeDistance);
+
+  return {
+    trafficSignals,
+    speedCameras
+  };
+}
+
+function trafficSignalDivIcon() {
+  return L.divIcon({
+    className: "traffic-signal-marker-wrap",
+    html: `
+      <span class="traffic-signal-marker" aria-hidden="true">
+        <span class="traffic-signal-light traffic-signal-light-red"></span>
+        <span class="traffic-signal-light traffic-signal-light-yellow"></span>
+        <span class="traffic-signal-light traffic-signal-light-green"></span>
+      </span>
+    `,
+    iconSize: [16, 32],
+    iconAnchor: [8, 16]
+  });
+}
+
+function clearTrafficAwareness(options = {}) {
+  const { preserveRouteKey = false } = options;
+
+  mapState.trafficSignalMarkers.forEach((marker) => {
+    if (mapState.map?.hasLayer(marker)) {
+      mapState.map.removeLayer(marker);
+    }
+  });
+
+  mapState.trafficSignalMarkers = [];
+  mapState.speedCameraPoints = [];
+  mapState.routeAwarenessRequestKeyPending = "";
+  mapState.lastSpeedCameraAlertKey = "";
+  mapState.lastSpeedCameraAlertAt = 0;
+
+  if (!preserveRouteKey) {
+    mapState.routeAwarenessKey = "";
+  }
+}
+
+function syncTrafficAwarenessOverlay() {
+  if (!mapState.map) {
+    return;
+  }
+
+  const shouldShowSignals = Boolean(
+    mapState.navigationActive
+    && mapState.activeBase === "street"
+    && mapState.trafficSignalMarkers.length
+  );
+
+  mapState.trafficSignalMarkers.forEach((marker) => {
+    const visible = mapState.map.hasLayer(marker);
+    if (shouldShowSignals && !visible) {
+      marker.addTo(mapState.map);
+    } else if (!shouldShowSignals && visible) {
+      mapState.map.removeLayer(marker);
+    }
+  });
+}
+
+function ensureAlertAudioContext() {
+  if (mapState.alertAudioContext) {
+    return mapState.alertAudioContext;
+  }
+
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) {
+    return null;
+  }
+
+  try {
+    mapState.alertAudioContext = new AudioContextClass();
+  } catch {
+    mapState.alertAudioContext = null;
+  }
+
+  return mapState.alertAudioContext;
+}
+
+function playSpeedCameraTone() {
+  const audioContext = ensureAlertAudioContext();
+  if (!audioContext) {
+    return;
+  }
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume().catch(() => {});
+  }
+
+  const startAt = audioContext.currentTime + 0.02;
+  [0, 0.18].forEach((offset, index) => {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.value = index === 0 ? 1046.5 : 1318.5;
+    gain.gain.setValueAtTime(0.0001, startAt + offset);
+    gain.gain.exponentialRampToValueAtTime(0.08, startAt + offset + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.16);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(startAt + offset);
+    oscillator.stop(startAt + offset + 0.18);
+  });
+}
+
+function maybeHandleNearbySpeedCamera(currentLocation) {
+  if (!mapState.navigationActive || !currentLocation || !mapState.speedCameraPoints.length) {
+    mapState.lastSpeedCameraAlertKey = "";
+    return;
+  }
+
+  const nearbyCamera = mapState.speedCameraPoints
+    .map((camera) => ({
+      ...camera,
+      distanceToUser: distanceMiles(currentLocation, camera)
+    }))
+    .sort((left, right) => left.distanceToUser - right.distanceToUser)[0];
+
+  if (!nearbyCamera || nearbyCamera.distanceToUser > SPEED_CAMERA_ALERT_RELEASE_THRESHOLD_MILES) {
+    mapState.lastSpeedCameraAlertKey = "";
+    return;
+  }
+
+  if (nearbyCamera.distanceToUser > SPEED_CAMERA_ALERT_THRESHOLD_MILES) {
+    return;
+  }
+
+  const now = Date.now();
+  const isRepeat = mapState.lastSpeedCameraAlertKey === nearbyCamera.key
+    && (now - mapState.lastSpeedCameraAlertAt) < SPEED_CAMERA_ALERT_COOLDOWN_MS;
+  if (isRepeat) {
+    return;
+  }
+
+  mapState.lastSpeedCameraAlertKey = nearbyCamera.key;
+  mapState.lastSpeedCameraAlertAt = now;
+  playSpeedCameraTone();
+}
+
+async function ensureRouteAwarenessForRoute(route, routeKey = mapState.routeKey) {
+  if (!mapState.navigationActive || !route || !routeKey) {
+    clearTrafficAwareness();
+    return;
+  }
+
+  if (mapState.routeAwarenessKey === routeKey && mapState.trafficSignalMarkers.length) {
+    syncTrafficAwarenessOverlay();
+    maybeHandleNearbySpeedCamera(mapState.currentLocation);
+    return;
+  }
+
+  if (mapState.routeAwarenessRequestKeyPending === routeKey) {
+    return;
+  }
+
+  const query = trafficAwarenessQuery(route);
+  if (!query) {
+    clearTrafficAwareness();
+    return;
+  }
+
+  mapState.routeAwarenessRequestKeyPending = routeKey;
+
+  try {
+    const data = await requestRouteAwarenessData(query);
+    if (!mapState.navigationActive || routeKey !== mapState.routeKey) {
+      return;
+    }
+
+    clearTrafficAwareness({ preserveRouteKey: true });
+    const awareness = filterRouteAwarenessFeatures(data?.elements, route);
+    mapState.routeAwarenessKey = routeKey;
+    mapState.speedCameraPoints = awareness.speedCameras;
+    mapState.trafficSignalMarkers = awareness.trafficSignals.map((signal) => L.marker([signal.lat, signal.lng], {
+      icon: trafficSignalDivIcon(),
+      keyboard: false,
+      pane: "routeAwarenessPane"
+    }).bindTooltip("Traffic light", {
+      direction: "top",
+      offset: [0, -8]
+    }));
+
+    syncTrafficAwarenessOverlay();
+    maybeHandleNearbySpeedCamera(mapState.currentLocation);
+  } catch {
+    clearTrafficAwareness();
+  } finally {
+    if (mapState.routeAwarenessRequestKeyPending === routeKey) {
+      mapState.routeAwarenessRequestKeyPending = "";
+    }
+  }
+}
+
 function clearParkingResults() {
   parkingResults.classList.add("is-hidden");
   parkingResults.innerHTML = "";
@@ -1129,6 +1470,7 @@ function setRouteMode(mode) {
 function clearNavigationGuide() {
   mapState.routeData = null;
   mapState.routeKey = "";
+  clearTrafficAwareness();
   if (!mapState.map || (!mapState.navigationLine && !mapState.navigationLineHalo && !mapState.navigationLineCore)) {
     clearRouteDetails();
     return;
@@ -1175,6 +1517,7 @@ function updateNavigationUI() {
   syncNavigationActivityUI(destination, origin);
   syncVoiceGuidanceButton();
   syncRecenterButton();
+  syncTrafficAwarenessOverlay();
 
   navigateButton.disabled = !(origin && destination);
   if (mapNavigateButton) {
@@ -1619,6 +1962,8 @@ function setCurrentLocation(lat, lng, accuracy = 0, options = {}) {
   maybeAdvanceVoiceGuidance(mapState.currentLocation);
   maybeAnnounceArrival(mapState.currentLocation);
   maybePromptForParkingAfterArrival(mapState.currentLocation);
+  maybeHandleNearbySpeedCamera(mapState.currentLocation);
+  syncTrafficAwarenessOverlay();
   updateNavigationUI();
 }
 
@@ -1904,6 +2249,7 @@ async function previewOptimalRoute(options = {}) {
 
     mapState.routeData = null;
     mapState.routeKey = "";
+    clearTrafficAwareness();
     drawNavigationGuide({ fitBounds });
     if (!silent) {
       const reason = error?.message ? ` (${error.message})` : "";
@@ -1929,6 +2275,7 @@ async function fetchTurnByTurnRoute() {
   resetArrivalState();
   const wasNavigating = mapState.navigationActive;
   mapState.navigationActive = true;
+  ensureAlertAudioContext();
   if (mapState.map && mapState.currentLocation) {
     mapState.navigationFollowMode = true;
     setBasemap("street");
@@ -1938,6 +2285,7 @@ async function fetchTurnByTurnRoute() {
   mapState.navigationFallbackMessage = "";
   const requestKey = buildRouteKey(origin, destination, mapState.routeMode);
   if (mapState.routeData && mapState.routeKey === requestKey) {
+    ensureRouteAwarenessForRoute(mapState.routeData, requestKey);
     updateNavigationUI();
     return;
   }
@@ -1974,6 +2322,7 @@ async function fetchTurnByTurnRoute() {
       syncFollowViewport();
     }
     renderRouteDetails(route);
+    ensureRouteAwarenessForRoute(route, requestKey);
     mapState.activeGuidanceStepIndex = 0;
     mapState.lastGuidanceAdvanceAt = 0;
     speakNavigationGuidance(route, destination, {
@@ -1986,6 +2335,7 @@ async function fetchTurnByTurnRoute() {
     }
     mapState.routeData = null;
     mapState.routeKey = "";
+    clearTrafficAwareness();
     const reason = error?.message ? ` (${error.message})` : "";
     mapState.navigationFallbackMessage = `${routeModeLabel(mapState.routeMode)} turn-by-turn routing is unavailable right now for ${destination.name}, so this is an estimate based on ${routeModeBasisLabel(mapState.routeMode)}${reason}.`;
     navigationStatus.textContent = mapState.navigationFallbackMessage;
@@ -2151,6 +2501,8 @@ function createMap() {
   L.control.zoom({ position: "topright" }).addTo(map);
   map.createPane("routeHighlightPane");
   map.getPane("routeHighlightPane").style.zIndex = "430";
+  map.createPane("routeAwarenessPane");
+  map.getPane("routeAwarenessPane").style.zIndex = "455";
   map.createPane("imageryReferencePane");
   map.getPane("imageryReferencePane").style.zIndex = "235";
 
