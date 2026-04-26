@@ -134,6 +134,7 @@ const SPEED_CAMERA_ROUTE_THRESHOLD_MILES = 0.045;
 const SPEED_CAMERA_ALERT_THRESHOLD_MILES = 0.11;
 const SPEED_CAMERA_ALERT_RELEASE_THRESHOLD_MILES = 0.15;
 const SPEED_CAMERA_ALERT_COOLDOWN_MS = 25000;
+const UPCOMING_TRAFFIC_SIGNAL_LOOKAHEAD_MILES = 0.22;
 const MAP_FOLLOW_ANIMATION_SECONDS = 0.35;
 const MAP_CONTEXT_FLY_SECONDS = 0.45;
 const CAMPUS_VIEW_CATEGORIES = new Set([
@@ -955,6 +956,53 @@ function routeGeometryPoints(route) {
     .filter(Boolean);
 }
 
+function routeSegmentInfo(point, route) {
+  const coordinates = route?.geometry?.coordinates;
+  if (!point || !Array.isArray(coordinates) || coordinates.length < 2) {
+    return null;
+  }
+
+  let best = null;
+  let cumulativeMiles = 0;
+
+  for (let index = 0; index < coordinates.length - 1; index += 1) {
+    const start = normalizePoint(coordinates[index]?.[1], coordinates[index]?.[0]);
+    const end = normalizePoint(coordinates[index + 1]?.[1], coordinates[index + 1]?.[0]);
+    if (!start || !end) {
+      continue;
+    }
+
+    const segmentDistance = distanceMiles(start, end);
+    const a = projectPointToMiles(point, start);
+    const b = projectPointToMiles(point, end);
+    const p = { x: 0, y: 0 };
+    const abx = b.x - a.x;
+    const aby = b.y - a.y;
+    const abLengthSquared = (abx * abx) + (aby * aby);
+    const apx = p.x - a.x;
+    const apy = p.y - a.y;
+    const t = abLengthSquared
+      ? Math.max(0, Math.min(1, ((apx * abx) + (apy * aby)) / abLengthSquared))
+      : 0;
+    const closestX = a.x + (abx * t);
+    const closestY = a.y + (aby * t);
+    const distanceToSegment = Math.hypot(closestX - p.x, closestY - p.y);
+    const progressMiles = cumulativeMiles + (segmentDistance * t);
+
+    if (!best || distanceToSegment < best.distanceMiles) {
+      best = {
+        segmentIndex: index,
+        distanceMiles: distanceToSegment,
+        progressMiles
+      };
+    }
+
+    cumulativeMiles += segmentDistance;
+  }
+
+  return best;
+}
+
 function routeBoundingBox(route) {
   const points = routeGeometryPoints(route);
   if (!points.length) {
@@ -1048,12 +1096,13 @@ function filterRouteAwarenessFeatures(elements, route) {
 
     const tags = element.tags || {};
     if (tags.highway === "traffic_signals") {
-      const routeDistance = distanceFromPointToRouteFeatureMiles(point, route, TRAFFIC_SIGNAL_ROUTE_THRESHOLD_MILES);
-      if (Number.isFinite(routeDistance)) {
+      const routeInfo = routeSegmentInfo(point, route);
+      if (routeInfo && routeInfo.distanceMiles <= TRAFFIC_SIGNAL_ROUTE_THRESHOLD_MILES) {
         trafficSignals.push({
           ...point,
           key: awarenessFeatureKey(point, "signal"),
-          routeDistance
+          routeDistance: routeInfo.distanceMiles,
+          routeProgressMiles: routeInfo.progressMiles
         });
       }
       return;
@@ -1064,12 +1113,13 @@ function filterRouteAwarenessFeatures(elements, route) {
       return;
     }
 
-    const routeDistance = distanceFromPointToRouteFeatureMiles(point, route, SPEED_CAMERA_ROUTE_THRESHOLD_MILES);
-    if (Number.isFinite(routeDistance)) {
+    const routeInfo = routeSegmentInfo(point, route);
+    if (routeInfo && routeInfo.distanceMiles <= SPEED_CAMERA_ROUTE_THRESHOLD_MILES) {
       speedCameras.push({
         ...point,
         key: awarenessFeatureKey(point, "camera"),
-        routeDistance
+        routeDistance: routeInfo.distanceMiles,
+        routeProgressMiles: routeInfo.progressMiles
       });
     }
   });
@@ -1101,9 +1151,9 @@ function trafficSignalDivIcon() {
 function clearTrafficAwareness(options = {}) {
   const { preserveRouteKey = false } = options;
 
-  mapState.trafficSignalMarkers.forEach((marker) => {
-    if (mapState.map?.hasLayer(marker)) {
-      mapState.map.removeLayer(marker);
+  mapState.trafficSignalMarkers.forEach((entry) => {
+    if (mapState.map?.hasLayer(entry.marker)) {
+      mapState.map.removeLayer(entry.marker);
     }
   });
 
@@ -1118,23 +1168,55 @@ function clearTrafficAwareness(options = {}) {
   }
 }
 
+function visibleTrafficSignalKeys() {
+  if (!mapState.navigationActive || mapState.activeBase !== "street" || !mapState.routeData || !mapState.currentLocation) {
+    return new Set();
+  }
+
+  const currentRouteInfo = routeSegmentInfo(mapState.currentLocation, mapState.routeData);
+  if (!currentRouteInfo) {
+    return new Set();
+  }
+
+  const guidance = currentGuidanceStep(mapState.routeData);
+  const nextManeuverPoint = routeStepLocation(guidance?.step);
+  const nextManeuverInfo = nextManeuverPoint
+    ? routeSegmentInfo(nextManeuverPoint, mapState.routeData)
+    : null;
+
+  const currentProgress = currentRouteInfo.progressMiles;
+  const nextProgress = nextManeuverInfo
+    ? Math.max(nextManeuverInfo.progressMiles, currentProgress)
+    : currentProgress + UPCOMING_TRAFFIC_SIGNAL_LOOKAHEAD_MILES;
+  const upperProgress = Math.min(
+    nextProgress,
+    currentProgress + UPCOMING_TRAFFIC_SIGNAL_LOOKAHEAD_MILES
+  );
+
+  return new Set(
+    mapState.trafficSignalMarkers
+      .filter((entry) => (
+        entry.routeProgressMiles >= currentProgress
+        && entry.routeProgressMiles <= upperProgress
+      ))
+      .map((entry) => entry.key)
+  );
+}
+
 function syncTrafficAwarenessOverlay() {
   if (!mapState.map) {
     return;
   }
 
-  const shouldShowSignals = Boolean(
-    mapState.navigationActive
-    && mapState.activeBase === "street"
-    && mapState.trafficSignalMarkers.length
-  );
+  const visibleKeys = visibleTrafficSignalKeys();
 
-  mapState.trafficSignalMarkers.forEach((marker) => {
-    const visible = mapState.map.hasLayer(marker);
-    if (shouldShowSignals && !visible) {
-      marker.addTo(mapState.map);
-    } else if (!shouldShowSignals && visible) {
-      mapState.map.removeLayer(marker);
+  mapState.trafficSignalMarkers.forEach((entry) => {
+    const shouldShow = visibleKeys.has(entry.key);
+    const visible = mapState.map.hasLayer(entry.marker);
+    if (shouldShow && !visible) {
+      entry.marker.addTo(mapState.map);
+    } else if (!shouldShow && visible) {
+      mapState.map.removeLayer(entry.marker);
     }
   });
 }
@@ -1252,13 +1334,17 @@ async function ensureRouteAwarenessForRoute(route, routeKey = mapState.routeKey)
     const awareness = filterRouteAwarenessFeatures(data?.elements, route);
     mapState.routeAwarenessKey = routeKey;
     mapState.speedCameraPoints = awareness.speedCameras;
-    mapState.trafficSignalMarkers = awareness.trafficSignals.map((signal) => L.marker([signal.lat, signal.lng], {
-      icon: trafficSignalDivIcon(),
-      keyboard: false,
-      pane: "routeAwarenessPane"
-    }).bindTooltip("Traffic light", {
-      direction: "top",
-      offset: [0, -8]
+    mapState.trafficSignalMarkers = awareness.trafficSignals.map((signal) => ({
+      key: signal.key,
+      routeProgressMiles: signal.routeProgressMiles,
+      marker: L.marker([signal.lat, signal.lng], {
+        icon: trafficSignalDivIcon(),
+        keyboard: false,
+        pane: "routeAwarenessPane"
+      }).bindTooltip("Traffic light", {
+        direction: "top",
+        offset: [0, -8]
+      })
     }));
 
     syncTrafficAwarenessOverlay();
