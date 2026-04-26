@@ -2166,7 +2166,7 @@ function createMap() {
   const imageryLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
     maxZoom: BASEMAP_MAX_ZOOM.imagery,
     maxNativeZoom: BASEMAP_NATIVE_ZOOM.imagery,
-    detectRetina: true,
+    detectRetina: false,
     updateWhenZooming: false,
     keepBuffer: 6,
     attribution: "Sources: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
