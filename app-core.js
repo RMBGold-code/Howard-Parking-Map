@@ -699,6 +699,58 @@ function guidanceAdvanceThresholdMiles(step) {
   return Math.max(0.03, Math.min(0.09, (stepMiles * 0.25) + 0.02));
 }
 
+function voiceStepInstruction(step) {
+  const maneuver = step?.maneuver || {};
+  const type = maneuver.type || "continue";
+  const modifier = maneuver.modifier ? `${maneuver.modifier} ` : "";
+  const roadName = [step?.name, step?.ref]
+    .find((value) => typeof value === "string" && value.trim());
+  const road = roadName ? ` on ${roadName.trim()}` : "";
+
+  if (type === "depart") {
+    return roadName ? `Continue${road}` : "Continue on the current road";
+  }
+
+  if (type === "arrive") {
+    return "You have arrived at your destination.";
+  }
+
+  if (type === "roundabout") {
+    const exit = maneuver.exit ? ` and take exit ${maneuver.exit}` : "";
+    return `Enter the roundabout${exit}${road}`.trim();
+  }
+
+  if (type === "merge") {
+    return `Merge ${modifier}${road}`.trim();
+  }
+
+  if (type === "fork") {
+    return `Keep ${modifier}${road}`.trim();
+  }
+
+  if (type === "on ramp" || type === "off ramp") {
+    return `Take the ${modifier}ramp${road}`.trim();
+  }
+
+  if (type === "use lane") {
+    return `Use the ${modifier || "correct "}lane${road}`.trim();
+  }
+
+  if (type === "new name") {
+    return roadName ? `Continue as ${roadName.trim()}` : "Continue as the road changes name";
+  }
+
+  if (type === "end of road" || type === "turn") {
+    return `Turn ${modifier}${road}`.trim();
+  }
+
+  if (type === "continue") {
+    return `Continue ${modifier}${road}`.trim();
+  }
+
+  return `${type.charAt(0).toUpperCase()}${type.slice(1)} ${modifier}${road}`.trim();
+}
+
 function speakNavigationGuidance(route, destination, options = {}) {
   if (!mapState.voiceGuidanceEnabled || !canUseVoiceGuidance() || !route) {
     return;
@@ -711,8 +763,15 @@ function speakNavigationGuidance(route, destination, options = {}) {
 
   const targetStepIndex = Math.max(0, Math.min(options.stepIndex ?? 0, steps.length - 1));
   const nextStep = steps[targetStepIndex];
-  const nextInstruction = stepInstruction(nextStep);
-  const instructionKey = `${destination?.name || ""}|${targetStepIndex}|${nextInstruction}|${Math.round(nextStep.distance)}`;
+  const nextInstruction = voiceStepInstruction(nextStep);
+  const instructionKey = [
+    destination?.name || "",
+    targetStepIndex,
+    nextStep?.maneuver?.type || "",
+    nextStep?.maneuver?.modifier || "",
+    nextStep?.name || "",
+    nextStep?.ref || ""
+  ].join("|");
   if (!options.force && mapState.lastSpokenInstructionKey === instructionKey) {
     return;
   }
@@ -724,9 +783,12 @@ function speakNavigationGuidance(route, destination, options = {}) {
 
   const parts = [];
   if (nextStep.maneuver?.type === "arrive") {
-    parts.push("You have arrived at your destination.");
+    parts.push(nextInstruction);
   } else {
-    parts.push(`${nextInstruction}. Continue for ${formatDistanceMiles(nextStep.distance)}.`);
+    parts.push(nextInstruction);
+    if ((nextStep.distance / 1609.344) >= 0.5) {
+      parts.push(`Continue for ${formatDistanceMiles(nextStep.distance)}.`);
+    }
   }
 
   const utterance = new SpeechSynthesisUtterance(parts.join(" "));
